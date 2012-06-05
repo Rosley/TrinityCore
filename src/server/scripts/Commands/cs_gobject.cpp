@@ -55,6 +55,7 @@ public:
             { "info",           SEC_GAMEMASTER,     false, &HandleGameObjectInfoCommand,      "", NULL },
             { "move",           SEC_GAMEMASTER,     false, &HandleGameObjectMoveCommand,      "", NULL },
             { "near",           SEC_GAMEMASTER,     false, &HandleGameObjectNearCommand,      "", NULL },
+            { "select",         SEC_GAMEMASTER,     false, &HandleGameObjectSelectCommand,    "", NULL },
             { "target",         SEC_GAMEMASTER,     false, &HandleGameObjectTargetCommand,    "", NULL },
             { "turn",           SEC_GAMEMASTER,     false, &HandleGameObjectTurnCommand,      "", NULL },
             { "add",            SEC_GAMEMASTER,     false, NULL,            "", gobjectAddCommandTable },
@@ -573,6 +574,45 @@ public:
         handler->PSendSysMessage(LANG_COMMAND_NEAROBJMESSAGE, distance, count);
         return true;
     }
+
+    static bool HandleGameObjectSelectCommand(ChatHandler* handler, const char* args)
+    {
+        uint32 entry = 0;
+        std::string name;
+        uint32 guid = 0;
+        WorldObject* obj = handler->getSelectedObject();
+        Player* player = handler->GetSession()->GetPlayer();
+
+        float distX = player->GetPositionX() - obj->GetPositionX();
+        float distY = player->GetPositionY() - obj->GetPositionY();
+        float distZ = player->GetPositionZ() - obj->GetPositionZ();
+
+        float distance = sqrtf(distZ * distZ + distY * distY + distX * distX);
+
+        if (!*args)
+        {
+            if (obj)
+                entry = obj->GetEntry();
+            else
+                entry = atoi((char*)args);
+        }
+
+        GameObjectTemplate const* goinfo = sObjectMgr->GetGameObjectTemplate(entry);
+
+        if (!goinfo)
+            return false;
+
+        name = goinfo->name;
+        guid = obj->ToGameObject()->GetGUIDLow();
+
+        //TODO: What's the .3 for? Is it needed in trinity?
+        handler->PSendSysMessage("Selected GameObject [ %s ](ID: %u) which is %.3f meters away from you.", name.c_str(), entry, distance);
+        handler->GetSession()->GetPlayer()->SetSelectedGobject(guid);
+
+        return true;
+    }
+
+
 
     //show info of gameobject
     static bool HandleGameObjectInfoCommand(ChatHandler* handler, char const* args)
