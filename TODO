@@ -1,0 +1,20 @@
+Convert Trinity-style commands to Arcemu-style
+Command permissions (.toggle mod, etc)
+Commands to disable items, spells, npcs
+toggle announce (always show server messages and admin messages)
+
+
+In-game report system
+	3 reports per account per day. (Can't be used on same account multiple times)
+	Store reports in auth DB (reports table)
+	Clear old reports after one week
+	Require 5 reports for a one-day ban.
+	
+	
+Cheat Commands
+	god - don't take damage. (unit::dealdamage)
+	fly - rename gm fly on
+	cooldown - send cooldown reset after successfull spell cast
+	casttime - set casttime = 0
+	power - checkpower function or something
+	
