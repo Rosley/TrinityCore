@@ -36,7 +36,11 @@ public:
 
         static ChatCommand cheatCommandTable[] =
         {
-            { "casttime",       SEC_GAMEMASTER,     false, &HandleCheatCasttimeCommand,        "", NULL },
+            { "god",            SEC_GAMEMASTER,     false, &HandleGodModeCheatCommand,         "", NULL },
+            { "casttime",       SEC_GAMEMASTER,     false, &HandleCasttimeCheatCommand,        "", NULL },
+            { "cooldown",       SEC_GAMEMASTER,     false, &HandleCoolDownCheatCommand,        "", NULL },
+            { "fly",            SEC_GAMEMASTER,     false, &HandleFlyCheatCommand,             "", NULL },
+            { "power",          SEC_GAMEMASTER,     false, &HandlePowerCheatCommand,           "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
 
@@ -46,26 +50,6 @@ public:
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;
-    }
-
-    static bool HandleModifyDrunkCommand(ChatHandler* handler, const char* args)
-    {
-        if (!*args)    return false;
-
-        uint32 drunklevel = (uint32)atoi(args);
-        if (drunklevel > 100)
-            drunklevel = 100;
-
-        uint16 drunkMod = drunklevel * 0xFFFF / 100;
-
-        Player* target = handler->getSelectedPlayer();
-        if (!target)
-            target = handler->GetSession()->GetPlayer();
-
-        if (target)
-            target->SetDrunkValue(drunkMod);
-
-        return true;
     }
 
     static bool HandleGodModeCheatCommand(ChatHandler* handler, const char* args)
@@ -100,7 +84,7 @@ public:
         return false;
     }
 
-    static bool HandleCastTimeCheatCommand(ChatHandler* handler, const char* args)
+    static bool HandleCasttimeCheatCommand(ChatHandler* handler, const char* args)
     {
 	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
 		    return false;
@@ -205,37 +189,37 @@ public:
         return false;
     }
 
-static bool HandlePowerCheatCommand(ChatHandler* handler, const char* args)
-{
-	if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
-		return false;
+    static bool HandlePowerCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
 
-	std::string argstr = (char*)args;
+	    std::string argstr = (char*)args;
 	
-	if (!*args)
-	{
-        argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER)) ? "off" : "on";
-		/*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER))
-			argstr = "off";	
-		else
-			argstr = "on";*/
-	}
+	    if (!*args)
+	    {
+            argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER)) ? "off" : "on";
+		    /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER))
+			    argstr = "off";	
+		    else
+			    argstr = "on";*/
+	    }
 
-	if (argstr == "off")
-	{
-		handler->GetSession()->GetPlayer()->m_cheatPower = false;
-		handler->SendSysMessage("Powercheat is OFF. You need mana/rage/energy to use spells.");
-		return true;
-	}
-	else if (argstr == "on")
-	{
-		handler->GetSession()->GetPlayer()->m_cheatPower = true;
-		handler->SendSysMessage("Powercheat is ON. Don't need mana/rage/energy to use spells.");
-		return true;
-	}
+	    if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatPower = false;
+		    handler->SendSysMessage("Powercheat is OFF. You need mana/rage/energy to use spells.");
+		    return true;
+	    }
+	    else if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatPower = true;
+		    handler->SendSysMessage("Powercheat is ON. Don't need mana/rage/energy to use spells.");
+		    return true;
+	    }
 	
-    return false;
-}
+        return false;
+    }
 
 };
 
