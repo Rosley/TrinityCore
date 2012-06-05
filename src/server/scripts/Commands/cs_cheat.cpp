@@ -221,6 +221,72 @@ public:
         return false;
     }
 
+    static bool HandleWaterWalkCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_WATERWALK)) ? "off" : "on";
+		    if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_WATERWALK))
+			    argstr = "off";	
+		    else
+			    argstr = "on";
+	    }
+
+	    if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatWaterWalk = false;
+		    handler->GetSession()->GetPlayer()->SetMovement(MOVE_LAND_WALK);                // OFF
+		    handler->SendSysMessage("Waterwalking is OFF. You can't walk on water.");
+		    return true;
+	    }
+	    else if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatWaterWalk = true;
+		    handler->GetSession()->GetPlayer()->SetMovement(MOVE_WATER_WALK);               // ON
+		    handler->SendSysMessage("Waterwalking is ON. You can walk on water.");
+		    return true;
+	    }
+	
+	    return false;
+    }
+
+    static bool HandleTriggerPassCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_TRIGGERPASS)) ? "off" : "on";
+		
+		    /* if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_TRIGGERPASS))
+			    argstr = "off";	
+		    else
+			    argstr = "on"; */
+	    }
+
+	    if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatTriggerPass = false;
+		    hander->SendSysMessage("Triggerpass is OFF. You need to be in a raidgroup to enter raids.");
+		    return true;
+	    }
+	    else if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatTriggerPass = true;
+		    handler->SendSysMessage("Triggerpass is ON. You can enter a raid without a group.");
+		    return true;
+	    }
+		    
+        return false;
+    }
 };
 
 void AddSC_cheat_commandscript()

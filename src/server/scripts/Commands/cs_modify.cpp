@@ -25,6 +25,7 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "ObjectMgr.h"
 #include "Chat.h"
+#include "DisableMgr.h"
 
 class modify_commandscript : public CommandScript
 {
@@ -1398,6 +1399,158 @@ public:
 
         return true;
     }
+
+    static bool HandleMountCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!*args)
+	    {
+		    handler->SendSysMessage("No model specified");
+		    return true;
+	    }
+
+	    uint32 modelid = atol(args);	
+	    Unit* target = handler->getSelectedUnit();
+			
+	    if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_DISPLAYID, modelid))
+        {
+    	    handler->SendSysMessage("You can't use this mount!");
+    	    return true;
+        }
+
+	    if (!target)
+	    {
+		    handler->SendSysMessage("No target specified");
+		    return true;
+	    }
+		
+	    if (target->IsMounted())
+	    {
+		    handler->SendSysMessage("Target is mounted");
+		    return true;
+	    }
+		
+	    target->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, modelid);
+        handler->PSendSysMessage("Mounted target with displayId: %u", modelid);
+        return true;
+    }
+
+    static bool HandleModifyAnnounceColorCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false; // "No color specified, for a list of colors type .color"
+
+	    std::string colorName;
+        std::string colorstr = strtok((char*)args, " "); //Args to be converted to uint32
+        uint32 color = atoi(colorstr.c_str()); //Args converted to uint32
+	    Player* player = handler->GetSession()->GetPlayer();
+
+        switch (color)
+        {
+            case 1:
+                player->SetAnnounceColor("|cffff6060");
+                colorName = "LightRed";
+                break;
+            case 2:
+                player->SetAnnounceColor("|cff00ccff");
+                colorName = "LightBlue";
+                break;
+            case 3:
+                player->SetAnnounceColor("|cff00C78C");
+                colorName = "TurquiseBlue";
+                break;
+            case 4:
+                player->SetAnnounceColor("|cff00FF7F");
+                colorName = "SpringGreen";
+                break;
+            case 5:
+                player->SetAnnounceColor("|cffADFF2F");
+                colorName = "GreenYellow";
+                break;
+            case 6:
+                player->SetAnnounceColor("|cffDA70D6");
+                colorName = "Purple";
+                break;
+            case 7:
+                player->SetAnnounceColor("|cff00ff00");
+                colorName = "Green";
+                break;
+            case 8:
+                player->SetAnnounceColor("|cffff0000");
+                colorName = "Red";
+                break;
+            case 9:
+                player->SetAnnounceColor("|cffffcc00");
+                colorName = "Gold";
+                break;
+            case 10:
+                player->SetAnnounceColor("|cffFFC125");
+                colorName = "Gold2";
+                break;
+            case 11:
+                player->SetAnnounceColor("|cff888888");
+                colorName = "Grey";
+                break;
+            case 12:
+                player->SetAnnounceColor("|cffffffff");
+                colorName = "White";
+                break;
+            case 13:
+                player->SetAnnounceColor("|cffbbbbbb");
+                colorName = "Subwhite";
+                break;
+            case 14:
+                player->SetAnnounceColor("|cffff00ff");
+                colorName = "Magenta";
+                break;
+            case 15:
+                player->SetAnnounceColor("|cffffff00");
+                colorName = "Yellow";
+                break;
+            case 16:
+                player->SetAnnounceColor("|cffFF4500");
+                colorName = "Orangey";
+                break;
+            case 17:
+                player->SetAnnounceColor("|cffCD661D");
+                colorName = "Chocolate";
+                break;
+            case 18:
+                player->SetAnnounceColor("|cff00ffff");
+                colorName = "Cyan";
+                break;
+            case 19:
+                player->SetAnnounceColor("|cffFFFFE0");
+                colorName = "LightYellow";
+                break;
+            case 20:
+                player->SetAnnounceColor("|cff71C671");
+                colorName = "SexyGreen";
+                break;
+            case 21:
+                player->SetAnnounceColor("|cff388E8E");
+                colorName = "SexyTeal";
+                break;
+            case 22:
+                player->SetAnnounceColor("|cffC67171");
+                colorName = "SexyPink";
+                break;
+            case 23:
+                player->SetAnnounceColor("|cff00E5EE");
+                colorName = "SexyBlue";
+                break;
+            case 24:
+                player->SetAnnounceColor("|cffFF6EB4");
+                colorName = "SexyHotPink";
+                break;
+            default:
+                return false;
+                break;
+        }
+
+        handler->PSendSysMessage("Chatcolor successfully set to %s.", colorName.c_str());
+        return true;
+    }
+
 };
 
 void AddSC_modify_commandscript()

@@ -32,6 +32,11 @@ enum DisableType
     DISABLE_TYPE_ACHIEVEMENT_CRITERIA   = 4,
     DISABLE_TYPE_OUTDOORPVP             = 5,
     DISABLE_TYPE_VMAP                   = 6,
+    DISABLE_TYPE_DISPLAYID              = 7,
+    DISABLE_TYPE_ITEM                   = 8,
+    DISABLE_TYPE_NPC                    = 9,
+    DISABLE_TYPE_GOBJECT                = 10,
+    DISABLE_TYPE_ZONE                   = 11
 };
 
 enum SpellDisableTypes

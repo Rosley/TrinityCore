@@ -868,6 +868,14 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
 	m_cheatCoolDown = false;
 	m_cheatCastTime = false;
 	m_cheatPower = false;
+    m_cheatWaterWalk = false;
+    m_cheatTriggerPass = false;
+    m_toggleAppear = false;
+    m_toggleSummon = false;
+    m_toggleModify = false;
+
+    m_annColor = "|cffffff00";
+    m_selectedGobject = 0;
 }
 
 Player::~Player()
@@ -25701,7 +25709,7 @@ bool Player::GetCommandStatus(int command)
 
 bool Player::IsAdmin()
 {
-    if (!GetSession())
+    if (!GetSession()) //We can use any command from the server console.
         return true;
 
     else
@@ -25716,4 +25724,13 @@ bool Player::IsAdmin()
                 return true;
         }
     }
+}
+
+//TODO: Is it necessary to query the server after every single command?
+bool Player::CanUseID(int type, uint32 id)
+{
+	QueryResult result = WorldDatabase.PQuery("SELECT * FROM disables where entry = %u AND sourceType = %u", id, type);
+	if (result && !IsAdmin())
+		return false;
+	return true;
 }

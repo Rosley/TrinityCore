@@ -895,6 +895,20 @@ enum PlayerRestState
     REST_STATE_RAF_LINKED                            = 0x06
 };
 
+enum CommandNames
+{
+    CHEAT_GOD           = 1,
+    CHEAT_CASTTIME      = 2,
+    CHEAT_COOLDOWN      = 3,
+    CHEAT_FLY           = 4,
+    CHEAT_POWER         = 5,
+    CHEAT_WATERWALK     = 6,
+    CHEAT_TRIGGERPASS   = 7,
+    TOGGLE_APPEAR       = 8,
+    TOGGLE_SUMMON       = 9,
+    TOGGLE_MODIFY       = 10
+};
+
 class PlayerTaxi
 {
     public:
@@ -2318,11 +2332,30 @@ class Player : public Unit, public GridObject<Player>
         WorldLocation GetStartPosition() const;
 
 		// GM Command Values
-		m_cheatGod = false;
-		m_cheatFly = false;
-	    m_cheatCoolDown = false;
-	    m_cheatCastTime = false;
-	    m_cheatPower = false;
+		bool m_cheatGod;
+		bool m_cheatFly;
+	    bool m_cheatCoolDown;
+	    bool m_cheatCastTime;
+	    bool m_cheatPower;
+        bool m_cheatWaterWalk;
+        bool m_cheatTriggerPass;
+        bool m_toggleAppear;
+        bool m_toggleSummon;
+        bool m_toggleModify;
+
+        std::string m_annColor;
+        uint32 m_selectedGobject;
+
+        void ToggleCommand(int command);
+        bool GetCommandStatus(int command);
+        bool IsAdmin();
+        bool CanUseID(int type, uint32 id);
+
+        std::string GetAnnounceColor() { return m_annColor.c_str(); }
+        void SetAnnounceColor(std::string color) { m_annColor = color; }
+
+        uint32 GetSelectedGobject() { return m_selectedGobject; }
+        void SetSelectedGobject(uint32 gobId) { m_selectedGobject = gobId; }
 
         // currently visible objects at player client
         typedef std::set<uint64> ClientGUIDs;
