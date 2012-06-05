@@ -1,20 +1,30 @@
 Convert Trinity-style commands to Arcemu-style
+	Gameobject
+		add .gobj select command
+			store selected object's GUID
+			use it in other gobj commands if no other argument is given
+		use one spawn command. 1 after spawn (.gobj spawn 2442 1) should make the spawn permanent
+	NPC
+		use one spawn command. 1 after spawn (.npc spawn 2442 1) should make the spawn permanent
+		Clear all temp-spawned NPCs on startup
+			
+	Cheat Commands
+		god - don't take damage. (unit::dealdamage)
+		fly - rename gm fly on
+		cooldown - send cooldown reset after successfull spell cast
+		casttime - set casttime = 0
+		power - checkpower function or something
+	
 Command permissions (.toggle mod, etc)
+	Try to find a way to do this so that it doesn't have to be added to every single command
+	
 Commands to disable items, spells, npcs
-toggle announce (always show server messages and admin messages)
-
+	Use existing disables table
 
 In-game report system
 	3 reports per account per day. (Can't be used on same account multiple times)
 	Store reports in auth DB (reports table)
 	Clear old reports after one week
-	Require 5 reports for a one-day ban.
-	
-	
-Cheat Commands
-	god - don't take damage. (unit::dealdamage)
-	fly - rename gm fly on
-	cooldown - send cooldown reset after successfull spell cast
-	casttime - set casttime = 0
-	power - checkpower function or something
+	Require 5 reports for a one-day ban.	
+
 	

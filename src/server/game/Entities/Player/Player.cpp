@@ -862,6 +862,12 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
     m_SeasonalQuestChanged = false;
 
     SetPendingBind(0, 0);
+
+	m_cheatGod = false;
+	m_cheatFly = false;
+	m_cheatCoolDown = false;
+	m_cheatCastTime = false;
+	m_cheatPower = false;
 }
 
 Player::~Player()
@@ -25620,4 +25626,94 @@ void Player::SendMovementSetFeatherFall(bool apply)
     data.append(GetPackGUID());
     data << uint32(0);          //! movement counter
     SendDirectMessage(&data);
+}
+
+void Player::ToggleCommand(int command)
+{
+    switch (command)
+    {
+        case CHEAT_GOD: 
+            m_cheatGod = !m_cheatGod;
+            break;
+        case CHEAT_CASTTIME: 
+            m_cheatCastTime = !m_cheatCastTime;
+            break;
+        case CHEAT_COOLDOWN: 
+            m_cheatCoolDown = !m_cheatCoolDown;
+            break;
+        case CHEAT_FLY: 
+            m_cheatFly = !m_cheatFly;
+            break;
+        case CHEAT_POWER: 
+            m_cheatPower = !m_cheatPower;
+            break;
+        case CHEAT_WATERWALK: 
+            m_cheatWaterWalk = !m_cheatWaterWalk;
+            break;
+        case CHEAT_TRIGGERPASS: 
+            m_cheatTriggerPass = !m_cheatTriggerPass;
+            break;
+        case TOGGLE_APPEAR: 
+            m_toggleAppear = !m_toggleAppear;
+            break;
+        case TOGGLE_SUMMON: 
+            m_toggleSummon = !m_toggleSummon;
+            break;
+        case TOGGLE_MODIFY: 
+            m_toggleModify = !m_toggleModify;
+            break;
+        default:
+            break;
+    }
+
+    return;
+}
+
+bool Player::GetCommandStatus(int command)
+{
+    switch (command)
+    {
+    case CHEAT_GOD: return m_cheatGod;
+        break;
+    case CHEAT_CASTTIME: return m_cheatCastTime;
+        break;
+    case CHEAT_COOLDOWN: return m_cheatCoolDown;
+        break;
+    case CHEAT_FLY: return m_cheatFly;
+        break;
+    case CHEAT_POWER: return m_cheatPower;
+        break;
+    case CHEAT_WATERWALK: return m_cheatWaterWalk;
+        break;
+    case CHEAT_TRIGGERPASS: return m_cheatTriggerPass;
+        break;
+    case TOGGLE_APPEAR: return m_toggleAppear;
+        break;
+    case TOGGLE_SUMMON: return m_toggleSummon;
+        break;
+    case TOGGLE_MODIFY: return m_toggleModify;
+        break;
+    default:
+        return false;
+        break;
+    }
+}
+
+bool Player::IsAdmin()
+{
+    if (!GetSession())
+        return true;
+
+    else
+    {
+        switch(GetSession()->GetSecurity())
+        {
+            case SEC_PLAYER:
+            case SEC_MODERATOR:
+                return false;
+            case SEC_GAMEMASTER:
+            case SEC_ADMINISTRATOR:
+                return true;
+        }
+    }
 }

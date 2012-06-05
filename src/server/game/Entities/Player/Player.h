@@ -2307,7 +2307,7 @@ class Player : public Unit, public GridObject<Player>
         void   SaveRecallPosition();
 
         void SetHomebind(WorldLocation const& loc, uint32 area_id);
-
+		
         // Homebind coordinates
         uint32 m_homebindMapId;
         uint16 m_homebindAreaId;
@@ -2316,6 +2316,13 @@ class Player : public Unit, public GridObject<Player>
         float m_homebindZ;
 
         WorldLocation GetStartPosition() const;
+
+		// GM Command Values
+		m_cheatGod = false;
+		m_cheatFly = false;
+	    m_cheatCoolDown = false;
+	    m_cheatCastTime = false;
+	    m_cheatPower = false;
 
         // currently visible objects at player client
         typedef std::set<uint64> ClientGUIDs;

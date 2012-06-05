@@ -36,7 +36,7 @@ public:
 
         static ChatCommand cheatCommandTable[] =
         {
-            { "update",         SEC_GAMEMASTER,     false, &HandleHonorUpdateCommand,          "", NULL },
+            { "casttime",       SEC_GAMEMASTER,     false, &HandleCheatCasttimeCommand,        "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
 
@@ -47,6 +47,196 @@ public:
         };
         return commandTable;
     }
+
+    static bool HandleModifyDrunkCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)    return false;
+
+        uint32 drunklevel = (uint32)atoi(args);
+        if (drunklevel > 100)
+            drunklevel = 100;
+
+        uint16 drunkMod = drunklevel * 0xFFFF / 100;
+
+        Player* target = handler->getSelectedPlayer();
+        if (!target)
+            target = handler->GetSession()->GetPlayer();
+
+        if (target)
+            target->SetDrunkValue(drunkMod);
+
+        return true;
+    }
+
+    static bool HandleGodModeCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+            argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_GOD)) ? "off" : "on";
+		    /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_GOD))
+			    argstr = "off";	
+		    else
+			    argstr = "on";*/
+	    }
+
+	    if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatGod = false;
+		    handler->SendSysMessage("Godmode is OFF. You can take damage.");
+		    return true;
+	    }
+	    else if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatGod = true;
+		    handler->SendSysMessage("Godmode is ON. You won't take damage.");
+		    return true;
+	    }
+		
+        return false;
+    }
+
+    static bool HandleCastTimeCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_CASTTIME)) ? "off" : "on";
+            /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_CASTTIME))
+			    argstr = "off";	
+		    else
+			    argstr = "on";*/
+	    }
+
+	    if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatCastTime = false;
+		    handler->SendSysMessage("CastTime cheat is OFF. Your spells will have a casttime.");
+		    return true;
+	    }
+	    else if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatCastTime = true;
+		    handler->SendSysMessage("CastTime cheat is ON. Your spells won't have a casttime.");
+		    return true;
+	    }
+		
+        return false;
+    }
+
+    static bool HandleCoolDownCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_COOLDOWN)) ? "off" : "on";
+            /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_COOLDOWN))
+			    argstr = "off";	
+		    else
+			    argstr = "on";*/
+	    }
+
+	    if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatCoolDown = false;
+		    handler->SendSysMessage("Cooldowncheat is OFF. You are on the global cooldown.");
+		    return true;
+	    }
+	    else if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatCoolDown = true;
+		    handler->SendSysMessage("Cooldowncheat is ON. You are not on the global cooldown.");
+		    return true;
+	    }
+
+		return false;
+    }
+
+    static bool HandleFlyCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	    WorldPacket data(12);
+	
+	    if (!*args)
+	    {
+		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_FLY)) ? "off" : "on";
+		    /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_FLY))
+			    argstr = "off";	
+		    else
+			    argstr = "on";*/
+	    }
+		
+	    if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatFly = true;
+		    data.SetOpcode(SMSG_MOVE_SET_CAN_FLY);
+		    handler->SendSysMessage("Flymode Enabled.");
+		    data.append(handler->GetSession()->GetPlayer()->GetPackGUID());
+		    data << uint32(0);                                      // unknown
+		    handler->GetSession()->GetPlayer()->SendMessageToSet(&data, true);
+		    return true;
+	    }
+	    else if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatFly = false;
+		    data.SetOpcode(SMSG_MOVE_UNSET_CAN_FLY);
+		    handler->SendSysMessage("Flymode Disabled.");
+		    data.append(handler->GetSession()->GetPlayer()->GetPackGUID());
+		    data << uint32(0);                                      // unknown
+		    handler->GetSession()->GetPlayer()->SendMessageToSet(&data, true);
+		    return true;
+	    }
+		    
+        return false;
+    }
+
+static bool HandlePowerCheatCommand(ChatHandler* handler, const char* args)
+{
+	if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		return false;
+
+	std::string argstr = (char*)args;
+	
+	if (!*args)
+	{
+        argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER)) ? "off" : "on";
+		/*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER))
+			argstr = "off";	
+		else
+			argstr = "on";*/
+	}
+
+	if (argstr == "off")
+	{
+		handler->GetSession()->GetPlayer()->m_cheatPower = false;
+		handler->SendSysMessage("Powercheat is OFF. You need mana/rage/energy to use spells.");
+		return true;
+	}
+	else if (argstr == "on")
+	{
+		handler->GetSession()->GetPlayer()->m_cheatPower = true;
+		handler->SendSysMessage("Powercheat is ON. Don't need mana/rage/energy to use spells.");
+		return true;
+	}
+	
+    return false;
+}
+
 };
 
 void AddSC_cheat_commandscript()
