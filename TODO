@@ -1,7 +1,5 @@
 Convert Trinity-style commands to Arcemu-style
 	Gameobject
-		add .gobj select command
-			use it in other gobj commands if no other argument is given
 		use one spawn command. 1 after spawn (.gobj spawn 2442 1) should make the spawn permanent
 	NPC
 		use one spawn command. 1 after spawn (.npc spawn 2442 1) should make the spawn permanent

@@ -72,14 +72,12 @@ public:
 
     static bool HandleGameObjectActivateCommand(ChatHandler* handler, char const* args)
     {
-        if (!*args)
-            return false;
 
         char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
-        if (!id)
+        if (!id && !args)
             return false;
 
-        uint32 guidLow = atoi(id);
+        uint32 guidLow = (args) ? handler->GetSession()->GetPlayer()->GetSelectedGobject(): atoi(id);
         if (!guidLow)
             return false;
 
@@ -334,10 +332,10 @@ public:
     {
         // number or [name] Shift-click form |color|Hgameobject:go_guid|h[name]|h|r
         char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
-        if (!id)
+        if (!id && !args)
             return false;
 
-        uint32 guidLow = atoi(id);
+        uint32 guidLow = (args) ? handler->GetSession()->GetPlayer()->GetSelectedGobject(): atoi(id);
         if (!guidLow)
             return false;
 
@@ -373,7 +371,6 @@ public:
         object->DeleteFromDB();
 
         handler->PSendSysMessage(LANG_COMMAND_DELOBJMESSAGE, object->GetGUIDLow());
-
         return true;
     }
 
@@ -382,10 +379,10 @@ public:
     {
         // number or [name] Shift-click form |color|Hgameobject:go_id|h[name]|h|r
         char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
-        if (!id)
+        if (!id && !args)
             return false;
 
-        uint32 guidLow = atoi(id);
+        uint32 guidLow = (args) ? handler->GetSession()->GetPlayer()->GetSelectedGobject(): atoi(id);
         if (!guidLow)
             return false;
 
@@ -431,10 +428,10 @@ public:
     {
         // number or [name] Shift-click form |color|Hgameobject:go_guid|h[name]|h|r
         char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
-        if (!id)
+        if (!id && !args)
             return false;
 
-        uint32 guidLow = atoi(id);
+        uint32 guidLow = (args) ? handler->GetSession()->GetPlayer()->GetSelectedGobject(): atoi(id);
         if (!guidLow)
             return false;
 
@@ -496,10 +493,10 @@ public:
     {
         // number or [name] Shift-click form |color|Hgameobject:go_id|h[name]|h|r
         char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
-        if (!id)
+        if (!id && !args)
             return false;
 
-        uint32 guidLow = atoi(id);
+        uint32 guidLow = (args) ? handler->GetSession()->GetPlayer()->GetSelectedGobject(): atoi(id);
         if (!guidLow)
             return false;
 
@@ -657,10 +654,10 @@ public:
     {
         // number or [name] Shift-click form |color|Hgameobject:go_id|h[name]|h|r
         char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
-        if (!id)
+        if (!id && !args)
             return false;
 
-        uint32 guidLow = atoi(id);
+        uint32 guidLow = (args) ? handler->GetSession()->GetPlayer()->GetSelectedGobject(): atoi(id);
         if (!guidLow)
             return false;
 
