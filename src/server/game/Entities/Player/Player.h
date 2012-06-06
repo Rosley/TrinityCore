@@ -906,7 +906,8 @@ enum CommandNames
     CHEAT_TRIGGERPASS   = 7,
     TOGGLE_APPEAR       = 8,
     TOGGLE_SUMMON       = 9,
-    TOGGLE_MODIFY       = 10
+    TOGGLE_MODIFY       = 10,
+    CHEAT_CASTWHILEMOVE = 11
 };
 
 class PlayerTaxi
@@ -2339,6 +2340,7 @@ class Player : public Unit, public GridObject<Player>
 	    bool m_cheatPower;
         bool m_cheatWaterWalk;
         bool m_cheatTriggerPass;
+        bool m_cheatCastWhileMoving;
         bool m_toggleAppear;
         bool m_toggleSummon;
         bool m_toggleModify;

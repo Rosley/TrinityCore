@@ -870,6 +870,7 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
 	m_cheatPower = false;
     m_cheatWaterWalk = false;
     m_cheatTriggerPass = false;
+    m_cheatCastWhileMoving = false;
     m_toggleAppear = false;
     m_toggleSummon = false;
     m_toggleModify = false;
@@ -25679,6 +25680,9 @@ void Player::ToggleCommand(int command)
         case CHEAT_TRIGGERPASS: 
             m_cheatTriggerPass = !m_cheatTriggerPass;
             break;
+        case CHEAT_CASTWHILEMOVE: 
+            m_cheatCastWhileMoving = !m_cheatCastWhileMoving;
+            break;
         case TOGGLE_APPEAR: 
             m_toggleAppear = !m_toggleAppear;
             break;
@@ -25712,6 +25716,8 @@ bool Player::GetCommandStatus(int command)
     case CHEAT_WATERWALK: return m_cheatWaterWalk;
         break;
     case CHEAT_TRIGGERPASS: return m_cheatTriggerPass;
+        break;
+    case CHEAT_CASTWHILEMOVE: return m_cheatCastWhileMoving;
         break;
     case TOGGLE_APPEAR: return m_toggleAppear;
         break;

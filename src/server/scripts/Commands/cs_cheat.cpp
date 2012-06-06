@@ -38,9 +38,12 @@ public:
         {
             { "god",            SEC_GAMEMASTER,     false, &HandleGodModeCheatCommand,         "", NULL },
             { "casttime",       SEC_GAMEMASTER,     false, &HandleCasttimeCheatCommand,        "", NULL },
+            { "castwhilemoving",SEC_GAMEMASTER,     false, &HandleCastWhileMovingCheatCommand, "", NULL },
             { "cooldown",       SEC_GAMEMASTER,     false, &HandleCoolDownCheatCommand,        "", NULL },
             { "fly",            SEC_GAMEMASTER,     false, &HandleFlyCheatCommand,             "", NULL },
             { "power",          SEC_GAMEMASTER,     false, &HandlePowerCheatCommand,           "", NULL },
+            { "waterwalk",      SEC_GAMEMASTER,     false, &HandleWaterWalkCheatCommand,       "", NULL },
+            { "triggerpass",    SEC_GAMEMASTER,     false, &HandleTriggerPassCheatCommand,     "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
 
@@ -282,6 +285,32 @@ public:
 	    {
 		    handler->GetSession()->GetPlayer()->m_cheatTriggerPass = true;
 		    handler->SendSysMessage("Triggerpass is ON. You can enter a raid without a group.");
+		    return true;
+	    }
+		    
+        return false;
+    }
+
+    static bool HandleCastWhileMovingCheatCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+		    argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_CASTWHILEMOVE)) ? "off" : "on";
+
+	    if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatCastWhileMoving = false;
+		    handler->SendSysMessage("CastMove is OFF. You can't cast while moving.");
+		    return true;
+	    }
+	    else if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_cheatCastWhileMoving = true;
+		    handler->SendSysMessage("CastMove is ON. You can can while moving.");
 		    return true;
 	    }
 		    
