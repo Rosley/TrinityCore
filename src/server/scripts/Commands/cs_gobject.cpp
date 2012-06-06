@@ -606,7 +606,7 @@ public:
         guid = obj->ToGameObject()->GetGUIDLow();
 
         //TODO: What's the .3 for? Is it needed in trinity?
-        handler->PSendSysMessage("Selected GameObject [ %s ](ID: %u) which is %.3f meters away from you.", name.c_str(), entry, distance);
+        handler->PSendSysMessage("Selected GameObject [ %s ](ID: %u) which is %f feet away from you.", name.c_str(), entry, distance);
         handler->GetSession()->GetPlayer()->SetSelectedGobject(guid);
 
         return true;

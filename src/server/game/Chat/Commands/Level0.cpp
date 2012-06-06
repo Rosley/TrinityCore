@@ -110,9 +110,8 @@ bool ChatHandler::HandleDismountCommand(const char* /*args*/)
     //If player is not mounted, so go out :)
     if (!player->IsMounted())
     {
-        SendSysMessage(LANG_CHAR_NON_MOUNTED);
-        SetSentErrorMessage(true);
-        return false;
+        player->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, 0);
+        return true;
     }
 
     if (player->isInFlight())

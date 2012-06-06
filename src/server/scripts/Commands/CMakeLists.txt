@@ -12,6 +12,7 @@ set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
   Commands/cs_account.cpp
   Commands/cs_achievement.cpp
+  Commands/cs_cheat.cpp
   Commands/cs_debug.cpp
   Commands/cs_event.cpp
   Commands/cs_gm.cpp
@@ -21,6 +22,7 @@ set(scripts_STAT_SRCS
   Commands/cs_learn.cpp
   Commands/cs_misc.cpp
   Commands/cs_modify.cpp
+  Commands/cs_nudge.cpp
   Commands/cs_npc.cpp
   Commands/cs_quest.cpp
   Commands/cs_reload.cpp

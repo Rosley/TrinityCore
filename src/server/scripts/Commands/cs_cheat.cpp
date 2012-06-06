@@ -61,8 +61,8 @@ public:
 	
 	    if (!*args)
 	    {
-            argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_GOD)) ? "off" : "on";
-		    /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_GOD))
+            argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_GOD)) ? "off" : "on";
+		    /*if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_GOD))
 			    argstr = "off";	
 		    else
 			    argstr = "on";*/
@@ -93,8 +93,8 @@ public:
 	
 	    if (!*args)
 	    {
-		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_CASTTIME)) ? "off" : "on";
-            /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_CASTTIME))
+		    argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_CASTTIME)) ? "off" : "on";
+            /*if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_CASTTIME))
 			    argstr = "off";	
 		    else
 			    argstr = "on";*/
@@ -125,8 +125,8 @@ public:
 	
 	    if (!*args)
 	    {
-		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_COOLDOWN)) ? "off" : "on";
-            /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_COOLDOWN))
+		    argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_COOLDOWN)) ? "off" : "on";
+            /*if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_COOLDOWN))
 			    argstr = "off";	
 		    else
 			    argstr = "on";*/
@@ -158,8 +158,8 @@ public:
 	
 	    if (!*args)
 	    {
-		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_FLY)) ? "off" : "on";
-		    /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_FLY))
+		    argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_FLY)) ? "off" : "on";
+		    /*if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_FLY))
 			    argstr = "off";	
 		    else
 			    argstr = "on";*/
@@ -198,8 +198,8 @@ public:
 	
 	    if (!*args)
 	    {
-            argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER)) ? "off" : "on";
-		    /*if (m_session->GetPlayer()->GetCommandStatus(CHEAT_POWER))
+            argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_POWER)) ? "off" : "on";
+		    /*if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_POWER))
 			    argstr = "off";	
 		    else
 			    argstr = "on";*/
@@ -230,7 +230,7 @@ public:
 	
 	    if (!*args)
 	    {
-		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_WATERWALK)) ? "off" : "on";
+		    argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_WATERWALK)) ? "off" : "on";
 		    if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_WATERWALK))
 			    argstr = "off";	
 		    else
@@ -264,7 +264,7 @@ public:
 	
 	    if (!*args)
 	    {
-		    argstr = (m_session->GetPlayer()->GetCommandStatus(CHEAT_TRIGGERPASS)) ? "off" : "on";
+		    argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_TRIGGERPASS)) ? "off" : "on";
 		
 		    /* if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_TRIGGERPASS))
 			    argstr = "off";	
@@ -275,7 +275,7 @@ public:
 	    if (argstr == "off")
 	    {
 		    handler->GetSession()->GetPlayer()->m_cheatTriggerPass = false;
-		    hander->SendSysMessage("Triggerpass is OFF. You need to be in a raidgroup to enter raids.");
+		    handler->SendSysMessage("Triggerpass is OFF. You need to be in a raidgroup to enter raids.");
 		    return true;
 	    }
 	    else if (argstr == "on")
