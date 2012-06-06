@@ -876,6 +876,7 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
 
     m_annColor = "|cffffff00";
     m_selectedGobject = 0;
+    int m_nudgeDistance = 3;
 }
 
 Player::~Player()
@@ -25741,6 +25742,7 @@ bool Player::IsAdmin()
                 return true;
         }
     }
+    return true;
 }
 
 //TODO: Is it necessary to query the server after every single command?

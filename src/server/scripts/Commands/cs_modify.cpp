@@ -68,6 +68,7 @@ public:
             { "announcecolor",  SEC_MODERATOR,      false, &HandleModifyAnnounceColorCommand, "", NULL },
             { "displayid",      SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,         "", NULL },
             { "speed",          SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
+            { "nudgedistance",  SEC_MODERATOR,      false, &HandleModifyNudgeDistanceCommand, "", NULL },
             { NULL,             0,                  false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
@@ -1551,6 +1552,29 @@ public:
         }
 
         handler->PSendSysMessage("Chatcolor successfully set to %s.", colorName.c_str());
+        return true;
+    }
+
+    static bool HandleModifyNudgeDistanceCommand(ChatHandler* handler, const char* args)
+    {
+	    Player* player = handler->GetSession()->GetPlayer();
+
+        if (!*args)
+        {
+            handler->PSendSysMessage("Your current nudge distance is %u feet.", player->GetNudgeDistance());
+		    return true;
+        }
+
+        int newDistance = atoi(args);
+        player->SetNudgeDistance(newDistance);
+
+        if (newDistance <= -50 || newDistance >= 50)
+        {
+            handler->SendSysMessage("Nudge distance is too large. Choose something between 50 and -50.");
+            return true;
+        }
+		
+        handler->PSendSysMessage("Nudge distance set to %u feet.", newDistance);
         return true;
     }
 
