@@ -666,6 +666,8 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     // update in loaded data (changing data only in this place)
     GameObjectData& data = sObjectMgr->NewGOData(m_DBTableGuid);
 
+    sLog->outString("Gobject::SaveToDB guid: %u", m_DBTableGuid);
+
     // data->guid = guid must not be updated at save
     data.id = GetEntry();
     data.mapid = mapid;

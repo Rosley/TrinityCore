@@ -39,7 +39,7 @@ public:
         static ChatCommand gobjectAddCommandTable[] =
         {
             { "temp",           SEC_GAMEMASTER,     false, &HandleGameObjectAddTempCommand,   "", NULL },
-            { "",               SEC_GAMEMASTER,     false, &HandleGameObjectAddCommand,       "", NULL },
+            { "",               SEC_GAMEMASTER,     false, &HandleDetermineGobjectSpawn,      "", NULL },
             { NULL,             0,                  false, NULL,                              "", NULL }
         };
         static ChatCommand gobjectSetCommandTable[] =
@@ -69,6 +69,34 @@ public:
         };
         return commandTable;
     }
+
+	static bool HandleDetermineGobjectSpawn(ChatHandler* handler, const char* args)
+    {		
+		if (!*args)
+            return false;
+
+		char* idstr = strtok((char*)args, " ");
+        uint32 id = (uint32)atoi(idstr);
+        bool save = false;
+	    char* savestr = strtok(NULL, " ");
+
+		if (savestr)
+			save = (atoi(savestr) > 0 ? true : false);
+		
+		if (save && handler->GetSession()->GetSecurity() > SEC_PLAYER)
+		{
+			handler->SendSysMessage("Permanent spawn.");
+            HandleGameObjectAddCommand(handler, idstr);
+			return true;
+		}
+		else
+		{
+            handler->SendSysMessage("Temp spawn.");
+			HandleGameObjectAddTempCommand(handler, idstr);
+			return true;
+		}
+		return true;
+	}
 
     static bool HandleGameObjectActivateCommand(ChatHandler* handler, char const* args)
     {
@@ -178,7 +206,7 @@ public:
     }
 
     // add go, temp only
-    static bool HandleGameObjectAddTempCommand(ChatHandler* handler, char const* args)
+/*    static bool HandleGameObjectAddTempCommand(ChatHandler* handler, char const* args)
     {
         if (!*args)
             return false;
@@ -207,6 +235,87 @@ public:
 
         player->SummonGameObject(objectId, x, y, z, ang, 0, 0, rot2, rot3, spawntm);
 
+        return true;
+    }*/
+
+    //spawn go
+    static bool HandleGameObjectAddTempCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        // number or [name] Shift-click form |color|Hgameobject_entry:go_id|h[name]|h|r
+        char* id = handler->extractKeyFromLink((char*)args, "Hgameobject_entry");
+        if (!id)
+            return false;
+
+        uint32 objectId = atol(id);
+        if (!objectId)
+            return false;
+
+        char* spawntimeSecs = strtok(NULL, " ");
+
+        const GameObjectTemplate* objectInfo = sObjectMgr->GetGameObjectTemplate(objectId);
+
+        if (!objectInfo)
+        {
+            handler->PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST, objectId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
+        {
+            // report to DB errors log as in loading case
+            sLog->outErrorDb("Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", objectId, objectInfo->type, objectInfo->displayId);
+            handler->PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, objectId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player* player = handler->GetSession()->GetPlayer();
+        float x = float(player->GetPositionX());
+        float y = float(player->GetPositionY());
+        float z = float(player->GetPositionZ());
+        float o = float(player->GetOrientation());
+        Map* map = player->GetMap();
+
+        GameObject* object = new GameObject;
+        uint32 guidLow = sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT);
+
+        if (!object->Create(guidLow, objectInfo->entry, map, player->GetPhaseMaskForSpawn(), x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
+        {
+            delete object;
+            return false;
+        }
+
+        if (spawntimeSecs)
+        {
+            uint32 value = atoi((char*)spawntimeSecs);
+            object->SetRespawnTime(value);
+        }
+
+        // fill the gameobject data and save to the db
+        object->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), player->GetPhaseMaskForSpawn());
+
+        SQLTransaction trans = WorldDatabase.BeginTransaction();
+        uint8 index = 0;
+        PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_UPD_GAMEOBJECT_MAKETEMP);
+        stmt->setUInt32(0, guidLow);
+        WorldDatabase.CommitTransaction(trans);
+        sLog->outString("Custom temp query guid: %u", guidLow);
+
+        // this will generate a new guid if the object is in an instance
+        if (!object->LoadGameObjectFromDB(guidLow, map))
+        {
+            delete object;
+            return false;
+        }
+
+        // TODO: is it really necessary to add both the real and DB table guid here ?
+        sObjectMgr->AddGameobjectToGrid(guidLow, sObjectMgr->GetGOData(guidLow));
+
+        handler->PSendSysMessage(LANG_GAMEOBJECT_ADD, objectId, objectInfo->name.c_str(), guidLow, x, y, z);
         return true;
     }
 
