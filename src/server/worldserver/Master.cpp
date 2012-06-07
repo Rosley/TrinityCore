@@ -455,6 +455,9 @@ bool Master::_StartDB()
     sWorld->LoadDBVersion();
 
     sLog->outString("Using World DB: %s", sWorld->GetDBVersion());
+
+    sLog->outString("Cleared all temporary npc spawns.");
+
     return true;
 }
 

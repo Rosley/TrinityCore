@@ -42,11 +42,8 @@ public:
             { "formation",      SEC_MODERATOR,      false, &HandleNpcAddFormationCommand,      "", NULL },
             { "item",           SEC_GAMEMASTER,     false, &HandleNpcAddVendorItemCommand,     "", NULL },
             { "move",           SEC_GAMEMASTER,     false, &HandleNpcAddMoveCommand,           "", NULL },
-            { "temp",           SEC_GAMEMASTER,     false, &HandleNpcAddTempSpawnCommand,      "", NULL },
-            //{ TODO: fix or remove this command
-            { "weapon",         SEC_ADMINISTRATOR,  false, &HandleNpcAddWeaponCommand,         "", NULL },
-            //}
-            { "",               SEC_GAMEMASTER,     false, &HandleNpcAddCommand,               "", NULL },
+            { "temp",           SEC_GAMEMASTER,     false, &HandleNpcTempAddCommand,           "", NULL },
+            { "",               SEC_GAMEMASTER,     false, &HandleDetermineNpcSpawn,           "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         static ChatCommand npcDeleteCommandTable[] =
@@ -104,6 +101,48 @@ public:
         };
         return commandTable;
     }
+        
+    #define TIME_BETWEEN_SPAWNS_MILLIS 15000
+	static bool HandleDetermineNpcSpawn(ChatHandler* handler, const char* args)
+    {
+		if (handler->GetSession()->GetSecurity() == SEC_PLAYER)
+		{
+			int timeSinceLastSpawn = handler->GetSession()->GetPlayer()->m_lastSpawnTime - getMSTime();
+			if (timeSinceLastSpawn > -TIME_BETWEEN_SPAWNS_MILLIS && timeSinceLastSpawn < TIME_BETWEEN_SPAWNS_MILLIS)
+			{
+				handler->SendSysMessage("You may only spawn NPCs once every 15 seconds unless you are a voter.");
+				return true;
+			}
+			else
+				handler->GetSession()->GetPlayer()->m_lastSpawnTime = getMSTime();
+		}
+		
+		if (!*args)
+            return false;
+
+		char* idstr = strtok((char*)args, " ");
+        uint32 id = (uint32)atoi(idstr);
+        bool save = false;
+	    char* savestr = strtok(NULL, " ");
+
+		if (savestr)
+			save = (atoi(savestr) > 0 ? true : false);
+		
+		if (save && handler->GetSession()->GetSecurity() > SEC_PLAYER)
+		{
+			handler->SendSysMessage("Permanent spawn.");
+            HandleNpcAddCommand(handler, idstr);
+			return true;
+		}
+		else
+		{
+            handler->SendSysMessage("Temp spawn.");
+			HandleNpcTempAddCommand(handler, idstr);
+			return true;
+		}
+		return true;
+	}
+
 
     //add spawn of creature
     static bool HandleNpcAddCommand(ChatHandler* handler, const char* args)
@@ -143,6 +182,7 @@ public:
                 stmt->setFloat(4, chr->GetTransOffsetY());
                 stmt->setFloat(5, chr->GetTransOffsetZ());
                 stmt->setFloat(6, chr->GetTransOffsetO());
+                stmt->setBool(7, 0);
 
                 WorldDatabase.Execute(stmt);
             }
@@ -1164,7 +1204,7 @@ public:
     }
 
     // add creature, temp only
-    static bool HandleNpcAddTempSpawnCommand(ChatHandler* handler, const char* args)
+    static bool HandleNpcTempAddCommand(ChatHandler* handler, const char* args)
     {
         if (!*args)
             return false;
@@ -1178,7 +1218,7 @@ public:
         if (!id)
             return false;
 
-        chr->SummonCreature(id, *chr, TEMPSUMMON_CORPSE_DESPAWN, 120);
+        chr->SummonCreature(id, *chr, TEMPSUMMON_DEAD_DESPAWN);
 
         return true;
     }

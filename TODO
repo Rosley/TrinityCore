@@ -1,9 +1,6 @@
 Convert Trinity-style commands to Arcemu-style
 	Gameobject
 		use one spawn command. 1 after spawn (.gobj spawn 2442 1) should make the spawn permanent
-	NPC
-		use one spawn command. 1 after spawn (.npc spawn 2442 1) should make the spawn permanent
-		Clear all temp-spawned NPCs on startup
 	
 Command permissions (.toggle mod, etc)
 	Try to find a way to do this so that it doesn't have to be added to every single command

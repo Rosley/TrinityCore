@@ -877,7 +877,8 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
 
     m_annColor = "|cffffff00";
     m_selectedGobject = 0;
-    int m_nudgeDistance = 3;
+    m_nudgeDistance = 3;
+    m_lastSpawnTime = 0;
 }
 
 Player::~Player()
