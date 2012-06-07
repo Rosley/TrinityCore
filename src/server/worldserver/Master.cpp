@@ -455,6 +455,10 @@ bool Master::_StartDB()
     sWorld->LoadDBVersion();
 
     sLog->outString("Using World DB: %s", sWorld->GetDBVersion());
+
+    WorldDatabase.Execute("DELETE FROM gameobject WHERE temp=1");
+    sLog->outString("Cleared all temporary gameobject spawns.");
+
     return true;
 }
 

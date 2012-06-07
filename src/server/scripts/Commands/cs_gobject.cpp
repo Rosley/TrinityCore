@@ -302,8 +302,8 @@ public:
         uint8 index = 0;
         PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_UPD_GAMEOBJECT_MAKETEMP);
         stmt->setUInt32(0, guidLow);
+        trans->Append(stmt);
         WorldDatabase.CommitTransaction(trans);
-        sLog->outString("Custom temp query guid: %u", guidLow);
 
         // this will generate a new guid if the object is in an instance
         if (!object->LoadGameObjectFromDB(guidLow, map))
