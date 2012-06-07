@@ -125,13 +125,11 @@ public:
 		
 		if (save && handler->GetSession()->GetSecurity() > SEC_PLAYER)
 		{
-			handler->SendSysMessage("Permanent spawn.");
             HandleNpcAddCommand(handler, idstr);
 			return true;
 		}
 		else
 		{
-            handler->SendSysMessage("Temp spawn.");
 			HandleNpcTempAddCommand(handler, idstr);
 			return true;
 		}
