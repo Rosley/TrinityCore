@@ -1,5 +1,3 @@
-Convert Trinity-style commands to Arcemu-style
-	
 Command permissions (.toggle mod, etc)
 	Try to find a way to do this so that it doesn't have to be added to every single command
 	

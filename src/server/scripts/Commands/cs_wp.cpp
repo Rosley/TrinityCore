@@ -47,7 +47,7 @@ public:
         };
         static ChatCommand commandTable[] =
         {
-            { "wp",             SEC_GAMEMASTER,     false, NULL,                     "", wpCommandTable },
+            { "waypoint",       SEC_GAMEMASTER,     false, NULL,                     "", wpCommandTable },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;

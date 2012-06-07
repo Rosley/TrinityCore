@@ -36,12 +36,12 @@ public:
 
     ChatCommand* GetCommands() const
     {
-        static ChatCommand gobjectAddCommandTable[] =
+        /*static ChatCommand gobjectAddCommandTable[] =
         {
             { "temp",           SEC_GAMEMASTER,     false, &HandleGameObjectAddTempCommand,   "", NULL },
             { "",               SEC_GAMEMASTER,     false, &HandleDetermineGobjectSpawn,      "", NULL },
             { NULL,             0,                  false, NULL,                              "", NULL }
-        };
+        };*/
         static ChatCommand gobjectSetCommandTable[] =
         {
             { "phase",          SEC_GAMEMASTER,     false, &HandleGameObjectSetPhaseCommand,  "", NULL },
@@ -57,8 +57,8 @@ public:
             { "near",           SEC_GAMEMASTER,     false, &HandleGameObjectNearCommand,      "", NULL },
             { "select",         SEC_GAMEMASTER,     false, &HandleGameObjectSelectCommand,    "", NULL },
             { "target",         SEC_GAMEMASTER,     false, &HandleGameObjectTargetCommand,    "", NULL },
-            { "turn",           SEC_GAMEMASTER,     false, &HandleGameObjectTurnCommand,      "", NULL },
-            { "add",            SEC_GAMEMASTER,     false, NULL,            "", gobjectAddCommandTable },
+            { "rotate",         SEC_GAMEMASTER,     false, &HandleGameObjectTurnCommand,      "", NULL },
+            { "spawn",          SEC_GAMEMASTER,     false, &HandleDetermineGobjectSpawn,      "", NULL },
             { "set",            SEC_GAMEMASTER,     false, NULL,            "", gobjectSetCommandTable },
             { NULL,             0,                  false, NULL,                              "", NULL }
         };

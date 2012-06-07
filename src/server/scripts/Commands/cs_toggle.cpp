@@ -36,7 +36,6 @@ public:
 
         static ChatCommand toggleCommandTable[] =
         {
-            { "update",         SEC_GAMEMASTER,     false, &HandleHonorUpdateCommand,          "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
 
@@ -46,28 +45,6 @@ public:
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;
-    }
-
-    static bool HandleHonorAddCommand(ChatHandler* handler, char const* args)
-    {
-        if (!*args)
-            return false;
-
-        Player* target = handler->getSelectedPlayer();
-        if (!target)
-        {
-            handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        // check online security
-        if (handler->HasLowerSecurity(target, 0))
-            return false;
-
-        uint32 amount = (uint32)atoi(args);
-        target->RewardHonor(NULL, 1, amount);
-        return true;
     }
 };
 

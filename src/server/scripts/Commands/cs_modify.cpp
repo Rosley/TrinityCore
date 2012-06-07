@@ -26,6 +26,7 @@ EndScriptData */
 #include "ObjectMgr.h"
 #include "Chat.h"
 #include "DisableMgr.h"
+#include "WeatherMgr.h"
 
 class modify_commandscript : public CommandScript
 {
@@ -34,16 +35,6 @@ public:
 
     ChatCommand* GetCommands() const
     {
-        /*static ChatCommand modifyspeedCommandTable[] =
-        {
-            { "fly",            SEC_MODERATOR,      false, &HandleModifyFlyCommand,           "", NULL },
-            { "all",            SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
-            { "walk",           SEC_MODERATOR,      false, &HandleModifySpeedCommand,         "", NULL },
-            { "backwalk",       SEC_MODERATOR,      false, &HandleModifyBWalkCommand,         "", NULL },
-            { "swim",           SEC_MODERATOR,      false, &HandleModifySwimCommand,          "", NULL },
-            { "",               SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
-            { NULL,             0,                  false, NULL,                              "", NULL }
-        };*/
         static ChatCommand modifyCommandTable[] =
         {
             { "hp",             SEC_MODERATOR,      false, &HandleModifyHPCommand,            "", NULL },
@@ -57,7 +48,6 @@ public:
             { "faction",        SEC_MODERATOR,      false, &HandleModifyFactionCommand,       "", NULL },
             { "spell",          SEC_MODERATOR,      false, &HandleModifySpellCommand,         "", NULL },
             { "talentpoints",   SEC_MODERATOR,      false, &HandleModifyTalentCommand,        "", NULL },
-            //{ "mount",          SEC_MODERATOR,      false, &HandleMountCommand,               "", NULL },
             { "honor",          SEC_MODERATOR,      false, &HandleModifyHonorCommand,         "", NULL },
             { "reputation",     SEC_GAMEMASTER,     false, &HandleModifyRepCommand,           "", NULL },
             { "arenapoints",    SEC_MODERATOR,      false, &HandleModifyArenaCommand,         "", NULL },
@@ -69,12 +59,13 @@ public:
             { "displayid",      SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,         "", NULL },
             { "speed",          SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
             { "nudgedistance",  SEC_MODERATOR,      false, &HandleModifyNudgeDistanceCommand, "", NULL },
+            { "level",          SEC_MODERATOR,      false, &HandleModifyLevelCommand,         "", NULL },
+            { "weather",        SEC_ADMINISTRATOR,  false, &HandleChangeWeather,              "", NULL },
             { NULL,             0,                  false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            //{ "morph",          SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,          "", NULL },
-            { "mount",          SEC_MODERATOR,      false, &HandleMountCommand,               "", NULL },
+            { "mount",          SEC_MODERATOR,      false, &HandleMountCommand,                "", NULL },
             { "demorph",        SEC_GAMEMASTER,     false, &HandleDeMorphCommand,              "", NULL },
             { "modify",         SEC_MODERATOR,      false, NULL,                 "", modifyCommandTable },
             { NULL,             0,                  false, NULL,                               "", NULL }
@@ -1575,6 +1566,118 @@ public:
         }
 		
         handler->PSendSysMessage("Nudge distance set to %u feet.", newDistance);
+        return true;
+    }
+
+    static void HandleCharacterLevel(Player* player, uint64 playerGuid, uint32 oldLevel, uint32 newLevel, ChatHandler* handler)
+    {
+        if (player)
+        {
+            player->GiveLevel(newLevel);
+            player->InitTalentForLevel();
+            player->SetUInt32Value(PLAYER_XP, 0);
+
+            if (handler->needReportToTarget(player))
+            {
+                if (oldLevel == newLevel)
+                    handler->PSendSysMessage(LANG_YOURS_LEVEL_PROGRESS_RESET, handler->GetNameLink().c_str());
+                else if (oldLevel < newLevel)
+                    handler->PSendSysMessage(LANG_YOURS_LEVEL_UP, handler->GetNameLink().c_str(), newLevel);
+                else                                                // if (oldlevel > newlevel)
+                    handler->PSendSysMessage(LANG_YOURS_LEVEL_DOWN, handler->GetNameLink().c_str(), newLevel);
+            }
+        }
+        else
+        {
+            // Update level and reset XP, everything else will be updated at login
+            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_LEVEL);
+
+            stmt->setUInt8(0, uint8(newLevel));
+            stmt->setUInt32(1, GUID_LOPART(playerGuid));
+
+            CharacterDatabase.Execute(stmt);
+        }
+    }
+
+    static bool HandleModifyLevelCommand(ChatHandler* handler, const char *args)
+    {
+        char* nameStr;
+        char* levelStr;
+        handler->extractOptFirstArg((char*)args, &nameStr, &levelStr);
+        if (!levelStr)
+            return false;
+
+        // exception opt second arg: .character level $name
+        if (isalpha(levelStr[0]))
+        {
+            nameStr = levelStr;
+            levelStr = NULL;                                    // current level will used
+        }
+
+        Player* target;
+        uint64 target_guid;
+        std::string target_name;
+        if (!handler->extractPlayerTarget(nameStr, &target, &target_guid, &target_name))
+            return false;
+
+        int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
+        int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
+
+        if (newlevel < 1)
+            return false;                                       // invalid level
+
+        if (newlevel > STRONG_MAX_LEVEL)                         // hardcoded maximum level
+            newlevel = STRONG_MAX_LEVEL;
+
+        HandleCharacterLevel(target, target_guid, oldlevel, newlevel, handler);
+
+        if (!handler->GetSession() || handler->GetSession()->GetPlayer() != target)      // including player == NULL
+        {
+            std::string nameLink = handler->playerLink(target_name);
+            handler->PSendSysMessage(LANG_YOU_CHANGE_LVL, nameLink.c_str(), newlevel);
+        }
+
+        return true;
+    }
+
+    static bool HandleChangeWeather(ChatHandler* handler, const char *args)
+    {
+        if (!*args)
+            return false;
+
+        //Weather is OFF
+        if (!sWorld->getBoolConfig(CONFIG_WEATHER))
+        {
+            handler->SendSysMessage(LANG_WEATHER_DISABLED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // *Change the weather of a cell
+        char* px = strtok((char*)args, " ");
+        char* py = strtok(NULL, " ");
+
+        if (!px || !py)
+            return false;
+
+        uint32 type = (uint32)atoi(px);                         //0 to 3, 0: fine, 1: rain, 2: snow, 3: sand
+        float grade = (float)atof(py);                          //0 to 1, sending -1 is instand good weather
+
+        Player* player = handler->GetSession()->GetPlayer();
+        uint32 zoneid = player->GetZoneId();
+
+        Weather* wth = WeatherMgr::FindWeather(zoneid);
+
+        if (!wth)
+            wth = WeatherMgr::AddWeather(zoneid);
+        if (!wth)
+        {
+            handler->SendSysMessage(LANG_NO_WEATHER);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        wth->SetWeather(WeatherType(type), grade);
         return true;
     }
 

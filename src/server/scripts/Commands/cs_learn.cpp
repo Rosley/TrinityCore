@@ -52,6 +52,7 @@ public:
             { "default",        SEC_MODERATOR,      false, &HandleLearnAllDefaultCommand,      "", NULL },
             { "lang",           SEC_MODERATOR,      false, &HandleLearnAllLangCommand,         "", NULL },
             { "recipes",        SEC_GAMEMASTER,     false, &HandleLearnAllRecipesCommand,      "", NULL },
+            { "",               SEC_ADMINISTRATOR,  false, &HandleLearnAllMyClassCommand,      "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
 

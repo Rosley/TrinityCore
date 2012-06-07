@@ -41,7 +41,7 @@ public:
             { "fly",            SEC_ADMINISTRATOR,  false, &HandleGMFlyCommand,               "", NULL },
             { "ingame",         SEC_PLAYER,         true,  &HandleGMListIngameCommand,        "", NULL },
             { "list",           SEC_ADMINISTRATOR,  true,  &HandleGMListFullCommand,          "", NULL },
-            { "visible",        SEC_MODERATOR,      false, &HandleGMVisibleCommand,           "", NULL },
+            { "invisible",      SEC_MODERATOR,      false, &HandleGMVisibleCommand,           "", NULL },
             { "",               SEC_MODERATOR,      false, &HandleGMCommand,                  "", NULL },
             { NULL,             0,                  false, NULL,                              "", NULL }
         };
@@ -198,14 +198,14 @@ public:
 
         std::string param = (char*)args;
 
-        if (param == "on")
+        if (param == "off")
         {
             handler->GetSession()->GetPlayer()->SetGMVisible(true);
             handler->GetSession()->SendNotification(LANG_INVISIBLE_VISIBLE);
             return true;
         }
 
-        if (param == "off")
+        if (param == "on")
         {
             handler->GetSession()->SendNotification(LANG_INVISIBLE_INVISIBLE);
             handler->GetSession()->GetPlayer()->SetGMVisible(false);

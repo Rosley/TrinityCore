@@ -53,6 +53,7 @@ public:
         static ChatCommand commandTable[] =
         {
             { "go",             SEC_MODERATOR,      false, NULL,                     "", goCommandTable },
+            { "worldport",      SEC_MODERATOR,      false, &HandleGoXYZCommand,               "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;

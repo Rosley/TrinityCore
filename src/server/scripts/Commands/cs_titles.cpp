@@ -48,7 +48,7 @@ public:
         };
         static ChatCommand commandTable[] =
         {
-            { "titles",         SEC_GAMEMASTER,     false, NULL,                 "", titlesCommandTable },
+            { "title",          SEC_GAMEMASTER,     false, NULL,                 "", titlesCommandTable },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;
