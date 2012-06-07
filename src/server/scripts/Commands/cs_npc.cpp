@@ -79,6 +79,11 @@ public:
             { "spawn",          SEC_GAMEMASTER,     false, &HandleDetermineNpcSpawn,           "", NULL },
             { "delete",         SEC_GAMEMASTER,     false, &HandleNpcDeleteCommand,            "", NULL },
             { "move",           SEC_GAMEMASTER,     false, &HandleNpcAddMoveCommand,           "", NULL },
+            { "possess",        SEC_ADMINISTRATOR,  false, &HandlePossessCommand,              "", NULL },
+            { "unpossess",      SEC_ADMINISTRATOR,  false, &HandleUnPossessCommand,            "", NULL },
+            { "bindsight",      SEC_ADMINISTRATOR,  false, &HandleBindSightCommand,            "", NULL },
+            { "unbindsight",    SEC_ADMINISTRATOR,  false, &HandleUnbindSightCommand,          "", NULL },
+            { "cometome",       SEC_ADMINISTRATOR,  false, &HandleComeToMeCommand,             "", NULL },
             { "vendor",         SEC_GAMEMASTER,     false, NULL,              "", npcVendorCommandTable },
             { "follow",         SEC_GAMEMASTER,     false, NULL,              "", npcFollowCommandTable },
             { "set",            SEC_GAMEMASTER,     false, NULL,                 "", npcSetCommandTable },
@@ -1526,6 +1531,70 @@ public:
         */
         return true;
     }
+
+    static bool HandlePossessCommand(ChatHandler* handler, const char * /*args*/)
+    {
+        Unit* unit = handler->getSelectedUnit();
+        if (!unit)
+            return false;
+
+        handler->GetSession()->GetPlayer()->CastSpell(unit, 530, true);
+        return true;
+    }
+
+    static bool HandleUnPossessCommand(ChatHandler* handler, const char * /*args*/)
+    {
+        Unit* unit = handler->getSelectedUnit();
+        if (!unit)
+            unit = handler->GetSession()->GetPlayer();
+
+        unit->RemoveCharmAuras();
+
+        return true;
+    }
+
+    static bool HandleBindSightCommand(ChatHandler* handler, const char * /*args*/)
+    {
+        Unit* unit = handler->getSelectedUnit();
+        if (!unit)
+            return false;
+
+        handler->GetSession()->GetPlayer()->CastSpell(unit, 6277, true);
+        return true;
+    }
+
+    static bool HandleUnbindSightCommand(ChatHandler* handler, const char * /*args*/)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+
+        if (player->isPossessing())
+            return false;
+
+        player->StopCastingBindSight();
+        return true;
+    }
+
+    static bool HandleComeToMeCommand(ChatHandler* handler, const char *args)
+    {
+        char* newFlagStr = strtok((char*)args, " ");
+
+        if (!newFlagStr)
+            return false;
+
+        Creature* caster = handler->getSelectedCreature();
+        if (!caster)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player* player = handler->GetSession()->GetPlayer();
+
+        caster->GetMotionMaster()->MovePoint(0, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+        return true;
+    }
+
 };
 
 void AddSC_npc_commandscript()
