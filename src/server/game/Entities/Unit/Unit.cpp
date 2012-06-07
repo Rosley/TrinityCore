@@ -541,6 +541,12 @@ uint32 Unit::DealDamage(Unit* victim, uint32 damage, CleanDamage const* cleanDam
     if (victim->IsAIEnabled)
         victim->GetAI()->DamageTaken(this, damage);
 
+    if (victim->GetTypeId() == TYPEID_PLAYER)
+    {
+        if (victim->ToPlayer()->GetCommandStatus(CHEAT_GOD))
+            return 0;
+    }
+
     if (IsAIEnabled)
         GetAI()->DamageDealt(victim, damage, damagetype);
 
