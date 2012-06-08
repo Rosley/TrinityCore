@@ -7,6 +7,3 @@ In-game report system
 	Store reports in auth DB (reports table)
 	Clear old reports after one week
 	Require 5 reports for a one-day ban.	
-
-
-Fly reports as on but doesnt work after death
