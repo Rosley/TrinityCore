@@ -97,6 +97,12 @@ public:
             return false;
         }
 
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         if (handler->HasLowerSecurity(target, 0))
             return false;
 
@@ -132,6 +138,12 @@ public:
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
             return false;
+        }
+
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
         }
 
         // check online security
@@ -181,6 +193,12 @@ public:
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
             return false;
+        }
+
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
         }
 
         // check online security
@@ -234,6 +252,12 @@ public:
             return false;
         }
 
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         // check online security
         if (handler->HasLowerSecurity(target, 0))
             return false;
@@ -272,6 +296,12 @@ public:
             return false;
         }
 
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         handler->PSendSysMessage(LANG_YOU_CHANGE_RUNIC_POWER, handler->GetNameLink(target).c_str(), rune/10, runem/10);
         if (handler->needReportToTarget(target))
             (ChatHandler(target)).PSendSysMessage(LANG_YOURS_RUNIC_POWER_CHANGED, handler->GetNameLink().c_str(), rune/10, runem/10);
@@ -290,10 +320,10 @@ public:
 
         char* pfactionid = handler->extractKeyFromLink((char*)args, "Hfaction");
 
-        Creature* target = handler->getSelectedCreature();
+        Unit* target = handler->getSelectedUnit();
         if (!target)
         {
-            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -316,6 +346,15 @@ public:
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
             return false;
+        }
+
+        if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+            {
+                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                return true;
+            }
         }
 
         uint32 factionid = atoi(pfactionid);
@@ -402,6 +441,12 @@ public:
         if (handler->HasLowerSecurity(target, 0))
             return false;
 
+        if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         handler->PSendSysMessage(LANG_YOU_CHANGE_SPELLFLATID, spellflatid, val, mark, handler->GetNameLink(target).c_str());
         if (handler->needReportToTarget(target))
             (ChatHandler(target)).PSendSysMessage(LANG_YOURS_SPELLFLATID_CHANGED, handler->GetNameLink().c_str(), spellflatid, val, mark);
@@ -436,6 +481,12 @@ public:
 
         if (target->GetTypeId() == TYPEID_PLAYER)
         {
+            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+            {
+                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                return true;
+            }
+            
             // check online security
             if (handler->HasLowerSecurity(target->ToPlayer(), 0))
                 return false;
@@ -483,6 +534,12 @@ public:
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
             return false;
+        }
+
+        if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
         }
 
         // check online security
@@ -703,15 +760,24 @@ public:
             return false;
         }
 
-        if (Player* player = target->ToPlayer())
+        if (target->GetTypeId() == TYPEID_PLAYER)
         {
-            // check online security
-            if (handler->HasLowerSecurity(player, 0))
-                return false;
+            if (Player* player = target->ToPlayer())
+            {
+                // check online security
+                if (handler->HasLowerSecurity(player, 0))
+                    return false;
 
-            handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE, Scale, handler->GetNameLink(player).c_str());
-            if (handler->needReportToTarget(player))
-                (ChatHandler(player)).PSendSysMessage(LANG_YOURS_SIZE_CHANGED, handler->GetNameLink().c_str(), Scale);
+                if (!player->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+                {
+                    handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                    return true;
+                }
+
+                handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE, Scale, handler->GetNameLink(player).c_str());
+                if (handler->needReportToTarget(player))
+                    (ChatHandler(player)).PSendSysMessage(LANG_YOURS_SIZE_CHANGED, handler->GetNameLink().c_str(), Scale);
+            }
         }
 
         target->SetObjectScale(Scale);
@@ -994,6 +1060,12 @@ public:
             return false;
         }
 
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         // check online security
         if (handler->HasLowerSecurity(target, 0))
             return false;
@@ -1057,6 +1129,15 @@ public:
             return false;
         }
 
+        if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+            {
+                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                return true;
+            }
+        }
+
         // check online security
         if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
             return false;
@@ -1111,6 +1192,12 @@ public:
             return false;
         }
 
+        if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         // check online security
         if (handler->HasLowerSecurity(target, 0))
             return false;
@@ -1138,9 +1225,13 @@ public:
         if (!target)
             target = handler->GetSession()->GetPlayer();
 
-        if (target)
-            target->SetDrunkValue(drunkMod);
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
 
+        target->SetDrunkValue(drunkMod);
         return true;
     }
 
@@ -1160,6 +1251,12 @@ public:
         // check online security
         if (handler->HasLowerSecurity(target, 0))
             return false;
+
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
 
         char* factionTxt = handler->extractKeyFromLink((char*)args, "Hfaction");
         if (!factionTxt)
@@ -1259,6 +1356,15 @@ public:
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
             return false;
 
+        if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+            {
+                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                return true;
+            }
+        }
+
         target->SetDisplayId(display_id);
 
         return true;
@@ -1275,6 +1381,15 @@ public:
         Unit* target = handler->getSelectedUnit();
         if (!target)
             target = handler->GetSession()->GetPlayer();
+
+        if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+            {
+                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                return true;
+            }
+        }
 
         // check online security
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
@@ -1310,6 +1425,12 @@ public:
             return false;
         }
 
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         int32 amount = (uint32)atoi(args);
 
         target->ModifyArenaPoints(amount);
@@ -1331,6 +1452,12 @@ public:
             handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND);
             handler->SetSentErrorMessage(true);
             return false;
+        }
+
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
         }
 
         PlayerInfo const* info = sObjectMgr->GetPlayerInfo(target->getRace(), target->getClass());
@@ -1390,6 +1517,15 @@ public:
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
             return false;
 
+        if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+            {
+                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                return true;
+            }
+        }
+
         target->DeMorph();
 
         return true;
@@ -1417,6 +1553,15 @@ public:
 		    handler->SendSysMessage("No target specified");
 		    return true;
 	    }
+
+        if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+            {
+                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+                return true;
+            }
+        }
 		
 	    if (target->IsMounted())
 	    {
@@ -1619,6 +1764,12 @@ public:
         std::string target_name;
         if (!handler->extractPlayerTarget(nameStr, &target, &target_guid, &target_name))
             return false;
+
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
 
         int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
         int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;

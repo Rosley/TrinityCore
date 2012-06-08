@@ -159,6 +159,12 @@ bool ChatHandler::HandleUnLearnCommand(const char *args)
         return false;
     }
 
+    if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+
     if (allRanks)
         spell_id = sSpellMgr->GetFirstSpellInChain (spell_id);
 

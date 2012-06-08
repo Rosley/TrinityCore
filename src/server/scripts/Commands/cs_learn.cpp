@@ -82,6 +82,12 @@ public:
             return false;
         }
 
+        if (!targetPlayer->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != targetPlayer->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", targetPlayer->GetName());
+            return true;
+        }
+
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
         uint32 spell = handler->extractSpellIdFromLink((char*)args);
         if (!spell || !sSpellMgr->GetSpellInfo(spell))
@@ -331,6 +337,12 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &target))
             return false;
 
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
         target->learnDefaultSpells();
         target->learnQuestRewardedSpells();
 
@@ -367,6 +379,12 @@ public:
         {
             handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
             return false;
+        }
+
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
         }
 
         if (!*args)
