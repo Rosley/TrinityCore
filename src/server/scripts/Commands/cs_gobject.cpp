@@ -76,6 +76,12 @@ public:
 		if (!*args)
             return false;
 
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()) && !handler->GetSession()->GetPlayer()->IsAdmin())
+		{
+			handler->SendSysMessage("Spawning is prohibited in this zone.");
+			return true;
+		}
+
 		char* idstr = strtok((char*)args, " ");
         uint32 id = (uint32)atoi(idstr);
         bool save = false;
