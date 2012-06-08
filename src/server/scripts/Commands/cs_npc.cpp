@@ -448,6 +448,13 @@ public:
             return false;
         }
 
+        if (!handler->GetSession()->GetPlayer()->CanModifyCreature(unit->GetGUID()))
+        {
+            handler->SendSysMessage("You can't modify this creature.");
+            return true;
+        }
+
+
         // Delete the creature
         unit->CombatStop();
         unit->DeleteFromDB();

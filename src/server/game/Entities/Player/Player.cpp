@@ -25776,3 +25776,11 @@ bool Player::CanUseCommandOnPlayer(Player* target)
     }
     return true; // !GetSession(), we're the console, we can do whatever we want.
 }
+
+bool Player::CanModifyCreature(uint32 id)
+{
+    QueryResult result = WorldDatabase.PQuery("SELECT id FROM creature WHERE canbedeleted = 0 AND guid = %u", id);
+    if (result && !IsAdmin())
+        return false;
+    return true;
+}
