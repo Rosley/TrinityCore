@@ -15725,6 +15725,12 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
         if (Player* killed = victim->ToPlayer())
             sScriptMgr->OnPlayerKilledByCreature(killerCre, killed);
     }
+
+    if (victim->GetTypeId() == TYPEID_PLAYER)
+    {
+        victim->ToPlayer()->m_cheatFly = false;
+        victim->ToPlayer()->m_cheatWaterWalk = false;
+    }
 }
 
 void Unit::SetControlled(bool apply, UnitState state)
