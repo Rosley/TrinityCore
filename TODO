@@ -1,7 +1,3 @@
-
-Commands to disable items, spells, npcs
-	Use existing disables table
-
 In-game report system
 	3 reports per account per day. (Can't be used on same account multiple times)
 	Store reports in auth DB (reports table)

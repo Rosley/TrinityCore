@@ -29,6 +29,7 @@ EndScriptData */
 #include "CreatureGroups.h"
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
 #include "CreatureAI.h"
+#include "DisableMgr.h"
 
 class npc_commandscript : public CommandScript
 {
@@ -100,7 +101,13 @@ public:
     #define TIME_BETWEEN_SPAWNS_MILLIS 15000
 	static bool HandleDetermineNpcSpawn(ChatHandler* handler, const char* args)
     {
-		if (handler->GetSession()->GetSecurity() == SEC_PLAYER)
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()) && !handler->GetSession()->GetPlayer()->IsAdmin())
+		{
+			handler->SendSysMessage("Spawning is prohibited in this zone.");
+			return true;
+		}
+        
+        if (handler->GetSession()->GetSecurity() == SEC_PLAYER)
 		{
 			int timeSinceLastSpawn = handler->GetSession()->GetPlayer()->m_lastSpawnTime - getMSTime();
 			if (timeSinceLastSpawn > -TIME_BETWEEN_SPAWNS_MILLIS && timeSinceLastSpawn < TIME_BETWEEN_SPAWNS_MILLIS)
@@ -119,6 +126,12 @@ public:
         uint32 id = (uint32)atoi(idstr);
         bool save = false;
 	    char* savestr = strtok(NULL, " ");
+
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id) && !handler->GetSession()->GetPlayer())
+        {
+            handler->PSendSysMessage("This NPC (id '%u') is disabled.", id);
+            return true;
+        }
 
 		if (savestr)
 			save = (atoi(savestr) > 0 ? true : false);

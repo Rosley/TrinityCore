@@ -276,6 +276,12 @@ bool ChatHandler::HandleAddItemCommand(const char *args)
         return true;
     }
 
+    if (!m_session->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, itemId) && !m_session->GetPlayer())
+    {
+        PSendSysMessage("This item (id '%u') is disabled.", itemId);
+        return true;
+    }
+
     sLog->outDetail(GetTrinityString(LANG_ADDITEM), itemId, count);
 
     ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemId);

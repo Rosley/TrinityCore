@@ -28,6 +28,7 @@ EndScriptData */
 #include "PoolMgr.h"
 #include "MapManager.h"
 #include "Chat.h"
+#include "DisableMgr.h"
 
 class gobject_commandscript : public CommandScript
 {
@@ -80,18 +81,28 @@ public:
         bool save = false;
 	    char* savestr = strtok(NULL, " ");
 
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_GOBJECT, id) && !handler->GetSession()->GetPlayer())
+        {
+            handler->PSendSysMessage("This gobject (id '%u') is disabled.", id);
+            return true;
+        }
+
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id) && !handler->GetSession()->GetPlayer())
+        {
+            handler->PSendSysMessage("This NPC (id '%u') is disabled.", id);
+            return true;
+        }
+
 		if (savestr)
 			save = (atoi(savestr) > 0 ? true : false);
 		
 		if (save && handler->GetSession()->GetSecurity() > SEC_PLAYER)
 		{
-			handler->SendSysMessage("Permanent spawn.");
             HandleGameObjectAddCommand(handler, idstr);
 			return true;
 		}
 		else
 		{
-            handler->SendSysMessage("Temp spawn.");
 			HandleGameObjectAddTempCommand(handler, idstr);
 			return true;
 		}
