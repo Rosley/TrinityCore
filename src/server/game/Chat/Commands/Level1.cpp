@@ -128,7 +128,7 @@ bool ChatHandler::HandleSummonCommand(const char* args)
     std::string target_name;
     if (!extractPlayerTarget((char*)args, &target, &target_guid, &target_name))
         return false;
-
+		
     Player* _player = m_session->GetPlayer();
     if (target == _player || target_guid == _player->GetGUID())
     {
@@ -396,7 +396,7 @@ bool ChatHandler::HandleRecallCommand(const char* args)
     Player* target;
     if (!extractPlayerTarget((char*)args, &target))
         return false;
-
+	
     // check online security
     if (HasLowerSecurity(target, 0))
         return false;
@@ -646,6 +646,12 @@ bool ChatHandler::HandleSendMailCommand(const char* args)
     std::string target_name;
     if (!extractPlayerTarget((char*)args, &target, &target_guid, &target_name))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     char* tail1 = strtok(NULL, "");
     if (!tail1)
@@ -688,6 +694,12 @@ bool ChatHandler::HandleGroupSummonCommand(const char* args)
     Player* target;
     if (!extractPlayerTarget((char*)args, &target))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     // check online security
     if (HasLowerSecurity(target, 0))

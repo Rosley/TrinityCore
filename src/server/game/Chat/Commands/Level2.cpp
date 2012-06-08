@@ -212,7 +212,7 @@ bool ChatHandler::HandleKickPlayerCommand(const char *args)
     std::string playerName;
     if (!extractPlayerTarget((char*)args, &target, NULL, &playerName))
         return false;
-
+	
     if (m_session && target == m_session->GetPlayer())
     {
         SendSysMessage(LANG_COMMAND_KICKSELF);
@@ -464,7 +464,13 @@ bool ChatHandler::HandleCharacterRenameCommand(const char* args)
     std::string targetName;
     if (!extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
         return false;
-
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+	
     if (target)
     {
         // check online security
@@ -503,6 +509,12 @@ bool ChatHandler::HandleCharacterCustomizeCommand(const char* args)
     std::string targetName;
     if (!extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
 
@@ -537,6 +549,12 @@ bool ChatHandler::HandleCharacterChangeFactionCommand(const char* args)
 
     if (!extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
 
@@ -570,6 +588,12 @@ bool ChatHandler::HandleCharacterChangeRaceCommand(const char * args)
     std::string targetName;
     if (!extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
 
@@ -603,6 +627,12 @@ bool ChatHandler::HandleCharacterReputationCommand(const char* args)
     Player* target;
     if (!extractPlayerTarget((char*)args, &target))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     LocaleConstant loc = GetSessionDbcLocale();
 
@@ -1137,6 +1167,12 @@ bool ChatHandler::HandleCharacterTitlesCommand(const char* args)
     Player* target;
     if (!extractPlayerTarget((char*)args, &target))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     LocaleConstant loc = GetSessionDbcLocale();
     char const* targetName = target->GetName();
