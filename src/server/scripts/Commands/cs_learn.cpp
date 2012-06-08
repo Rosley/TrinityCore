@@ -27,6 +27,7 @@ EndScriptData */
 #include "SpellMgr.h"
 #include "Chat.h"
 #include "SpellInfo.h"
+#include "DisableMgr.h"
 
 class learn_commandscript : public CommandScript
 {
@@ -92,6 +93,12 @@ public:
         uint32 spell = handler->extractSpellIdFromLink((char*)args);
         if (!spell || !sSpellMgr->GetSpellInfo(spell))
             return false;
+
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_SPELL, spell) && !handler->GetSession()->GetPlayer())
+        {
+            handler->PSendSysMessage("This spell (id '%u') is disabled.", spell);
+            return true;
+        }
 
         char const* all = strtok(NULL, " ");
         bool allRanks = all ? (strncmp(all, "all", strlen(all)) == 0) : false;
