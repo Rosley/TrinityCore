@@ -86,10 +86,10 @@ enum TrinityStrings
     LANG_CONNECTED_PLAYERS              = 60,
     LANG_ACCOUNT_ADDON                  = 61,
     LANG_IMPROPER_VALUE                 = 62,
-    LANG_SYSTEMMESSAGE_PLAYER           = 63,
-    LANG_SYSTEMMESSAGE_VOTER            = 64,
-    LANG_SYSTEMMESSAGE_STAFF            = 65,
-    // Room for more level 0              66-99 not used
+    LANG_SYSTEMMESSAGE_PLAYER           = 66,
+    LANG_SYSTEMMESSAGE_VOTER            = 67,
+    LANG_SYSTEMMESSAGE_STAFF            = 68,
+    // Room for more level 0              69-99 not used
 
     // level 1 chat
     LANG_GLOBAL_NOTIFY                  = 100,
