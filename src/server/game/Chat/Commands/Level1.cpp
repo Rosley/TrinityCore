@@ -168,7 +168,7 @@ bool ChatHandler::HandleSummonCommand(const char* args)
 
         if (!target->GetCommandStatus(TOGGLE_SUMMON) && !_player->IsAdmin())
         {
-            PSendSysMessage("%s has summon toggled off. You can't summon him/her.", target_name);
+            PSendSysMessage("%s has summon toggled off. You can't summon him/her.", target_name.c_str());
             return true;
         }
 
@@ -288,7 +288,7 @@ bool ChatHandler::HandleAppearCommand(const char* args)
 
         if (!target->GetCommandStatus(TOGGLE_APPEAR) && !_player->IsAdmin())
         {
-            PSendSysMessage("%s has appear toggled off. You can't appear to him/her.", target_name);
+            PSendSysMessage("%s has appear toggled off. You can't appear to him/her.", target_name.c_str());
             return true;
         }
 
