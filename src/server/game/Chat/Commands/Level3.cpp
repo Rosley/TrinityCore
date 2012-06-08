@@ -158,8 +158,8 @@ bool ChatHandler::HandleUnLearnCommand(const char *args)
         SetSentErrorMessage(true);
         return false;
     }
-
-    if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
     {
         PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
         return true;
@@ -269,6 +269,12 @@ bool ChatHandler::HandleAddItemCommand(const char *args)
     Player* plTarget = getSelectedPlayer();
     if (!plTarget)
         plTarget = player;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     sLog->outDetail(GetTrinityString(LANG_ADDITEM), itemId, count);
 
@@ -348,8 +354,14 @@ bool ChatHandler::HandleAddItemSetCommand(const char *args)
     Player* playerTarget = getSelectedPlayer();
     if (!playerTarget)
         playerTarget = player;
-
-    sLog->outDetail(GetTrinityString(LANG_ADDITEMSET), itemsetId);
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+    
+	sLog->outDetail(GetTrinityString(LANG_ADDITEMSET), itemsetId);
 
     bool found = false;
     ItemTemplateContainer const* its = sObjectMgr->GetItemTemplateStore();
@@ -1682,8 +1694,14 @@ bool ChatHandler::HandleGuildCreateCommand(const char *args)
     Player* target;
     if (!extractPlayerTarget(*args != '"' ? (char*)args : NULL, &target))
         return false;
-
-    char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+    
+	char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
     if (!tailStr)
         return false;
 
@@ -1721,8 +1739,14 @@ bool ChatHandler::HandleGuildInviteCommand(const char *args)
     uint64 target_guid;
     if (!extractPlayerTarget(*args != '"' ? (char*)args : NULL, NULL, &target_guid))
         return false;
-
-    char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+    
+	char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
     if (!tailStr)
         return false;
 
@@ -1745,8 +1769,14 @@ bool ChatHandler::HandleGuildUninviteCommand(const char *args)
     uint64 target_guid;
     if (!extractPlayerTarget((char*)args, &target, &target_guid))
         return false;
-
-    uint32 glId = target ? target->GetGuildId() : Player::GetGuildIdFromDB(target_guid);
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+    
+	uint32 glId = target ? target->GetGuildId() : Player::GetGuildIdFromDB(target_guid);
     if (!glId)
         return false;
 
@@ -1771,8 +1801,14 @@ bool ChatHandler::HandleGuildRankCommand(const char *args)
     std::string target_name;
     if (!extractPlayerTarget(nameStr, &target, &target_guid, &target_name))
         return false;
-
-    uint32 glId = target ? target->GetGuildId() : Player::GetGuildIdFromDB(target_guid);
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+   
+   uint32 glId = target ? target->GetGuildId() : Player::GetGuildIdFromDB(target_guid);
     if (!glId)
         return false;
 
@@ -1846,7 +1882,13 @@ bool ChatHandler::HandleDieCommand(const char* /*args*/)
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
         return false;
-    }
+		
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+			return true;
+		}
+	}
 
     if (target->GetTypeId() == TYPEID_PLAYER)
     {
@@ -1872,7 +1914,13 @@ bool ChatHandler::HandleDamageCommand(const char * args)
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
         return false;
-    }
+    
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+			return true;
+		}
+	}
 
     if (target->GetTypeId() == TYPEID_PLAYER)
     {
@@ -1954,7 +2002,13 @@ bool ChatHandler::HandleReviveCommand(const char *args)
 
     if (target)
     {
-        target->ResurrectPlayer(!AccountMgr::IsPlayerAccount(target->GetSession()->GetSecurity()) ? 1.0f : 0.5f);
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+     {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+     }
+	
+	target->ResurrectPlayer(!AccountMgr::IsPlayerAccount(target->GetSession()->GetSecurity()) ? 1.0f : 0.5f);
         target->SpawnCorpseBones();
         target->SaveToDB();
     }
@@ -1973,6 +2027,13 @@ bool ChatHandler::HandleAuraCommand(const char *args)
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
         return false;
+		
+	}
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
     }
 
     // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
@@ -1992,6 +2053,12 @@ bool ChatHandler::HandleUnAuraCommand(const char *args)
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
         return false;
+    }
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
     }
 
     std::string argstr = args;
@@ -2219,8 +2286,14 @@ bool ChatHandler::HandleCharacterLevelCommand(const char *args)
     std::string target_name;
     if (!extractPlayerTarget(nameStr, &target, &target_guid, &target_name))
         return false;
-
-    int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+    
+	int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
     int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
 
     if (newlevel < 1)
@@ -2445,8 +2518,14 @@ bool ChatHandler::HandleResetAchievementsCommand (const char * args)
     uint64 target_guid;
     if (!extractPlayerTarget((char*)args, &target, &target_guid))
         return false;
-
-    if (target)
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+    
+	if (target)
         target->GetAchievementMgr().Reset();
     else
         AchievementMgr::DeleteFromDB(GUID_LOPART(target_guid));
@@ -2459,7 +2538,11 @@ bool ChatHandler::HandleResetHonorCommand (const char * args)
     Player* target;
     if (!extractPlayerTarget((char*)args, &target))
         return false;
-
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
     target->SetHonorPoints(0);
     target->SetUInt32Value(PLAYER_FIELD_KILLS, 0);
     target->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 0);
@@ -2512,8 +2595,14 @@ bool ChatHandler::HandleResetLevelCommand(const char * args)
     Player* target;
     if (!extractPlayerTarget((char*)args, &target))
         return false;
-
-    if (!HandleResetStatsOrLevelHelper(target))
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+   
+   if (!HandleResetStatsOrLevelHelper(target))
         return false;
 
     uint8 oldLevel = target->getLevel();
@@ -2548,8 +2637,14 @@ bool ChatHandler::HandleResetStatsCommand(const char * args)
     Player* target;
     if (!extractPlayerTarget((char*)args, &target))
         return false;
-
-    if (!HandleResetStatsOrLevelHelper(target))
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+    
+	if (!HandleResetStatsOrLevelHelper(target))
         return false;
 
     target->InitRunes();
@@ -2568,7 +2663,13 @@ bool ChatHandler::HandleResetSpellsCommand(const char* args)
     std::string targetName;
     if (!extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
         return false;
-
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+	
     if (target)
     {
         target->resetSpells(/* bool myClassOnly */);
@@ -2620,10 +2721,15 @@ bool ChatHandler::HandleResetTalentsCommand(const char* args)
         SetSentErrorMessage(true);
         return false;
     }
-
+		
     if (target)
     {
-        target->resetTalents(true);
+       if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+     {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+     }
+	   target->resetTalents(true);
         target->SendTalentsInfoData(false);
         ChatHandler(target).SendSysMessage(LANG_RESET_TALENTS);
         if (!m_session || m_session->GetPlayer() != target)
@@ -2656,6 +2762,7 @@ bool ChatHandler::HandleResetTalentsCommand(const char* args)
 
 bool ChatHandler::HandleResetAllCommand(const char * args)
 {
+//Restrict this, will turn out really bad
     if (!*args)
         return false;
 
@@ -3828,7 +3935,13 @@ bool ChatHandler::HandleCastCommand(const char *args)
         SetSentErrorMessage(true);
         return false;
     }
-
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+	
     // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
     uint32 spell = extractSpellIdFromLink((char*)args);
     if (!spell)
@@ -4261,7 +4374,13 @@ bool ChatHandler::HandleSendItemsCommand(const char *args)
     std::string receiver_name;
     if (!extractPlayerTarget((char*)args, &receiver, &receiver_guid, &receiver_name))
         return false;
-
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+	
     char* tail1 = strtok(NULL, "");
     if (!tail1)
         return false;
@@ -4371,7 +4490,13 @@ bool ChatHandler::HandleSendMoneyCommand(const char *args)
     std::string receiver_name;
     if (!extractPlayerTarget((char*)args, &receiver, &receiver_guid, &receiver_name))
         return false;
-
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
+	
     char* tail1 = strtok(NULL, "");
     if (!tail1)
         return false;
@@ -4420,6 +4545,12 @@ bool ChatHandler::HandleSendMessageCommand(const char *args)
     Player* rPlayer;
     if (!extractPlayerTarget((char*)args, &rPlayer))
         return false;
+	
+	if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+    {
+        PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+        return true;
+    }
 
     char* msg_str = strtok(NULL, "");
     if (!msg_str)
