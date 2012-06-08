@@ -871,9 +871,9 @@ Player::Player(WorldSession* session): Unit(true), m_achievementMgr(this), m_rep
     m_cheatWaterWalk = false;
     m_cheatTriggerPass = false;
     m_cheatCastWhileMoving = false;
-    m_toggleAppear = false;
-    m_toggleSummon = false;
-    m_toggleModify = false;
+    m_toggleAppear = true;
+    m_toggleSummon = true;
+    m_toggleModify = true;
 
     m_annColor = "|cffffff00";
     m_selectedGobject = 0;
@@ -25759,4 +25759,20 @@ bool Player::CanUseID(int type, uint32 id)
 	if (result && !IsAdmin())
 		return false;
 	return true;
+}
+
+bool Player::CanUseCommandOnPlayer(Player* target)
+{
+	if (GetSession()) //If we're in-game (not the console)
+    {
+        // If they're an admin and we aren't, we can't use the command on them.
+	    if (target->IsAdmin() && !IsAdmin())
+		    return false;
+		
+	    // If we aren't using the command on ourselves and our target has toggle modify on, we can't use the command.
+	    else if (GetGUID() != target->GetGUID() && !target->GetCommandStatus(TOGGLE_MODIFY) && !IsAdmin())
+		    return false;
+		return true; //Every other check passed, we can probably use commands on this player.
+    }
+    return true; // !GetSession(), we're the console, we can do whatever we want.
 }

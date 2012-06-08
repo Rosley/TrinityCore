@@ -2354,6 +2354,7 @@ class Player : public Unit, public GridObject<Player>
         bool GetCommandStatus(int command);
         bool IsAdmin();
         bool CanUseID(int type, uint32 id);
+        bool CanUseCommandOnPlayer(Player* target);
 
         std::string GetAnnounceColor() { return m_annColor.c_str(); }
         void SetAnnounceColor(std::string color) { m_annColor = color; }

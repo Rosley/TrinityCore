@@ -144,6 +144,12 @@ bool ChatHandler::HandleSummonCommand(const char* args)
         if (HasLowerSecurity(target, 0))
             return false;
 
+        if (!target->GetCommandStatus(TOGGLE_SUMMON) && !_player->IsAdmin())
+        {
+            PSendSysMessage("%s has summon toggled off. You can't summon him/her.", target_name);
+            return true;
+        }
+
         if (target->IsBeingTeleported())
         {
             PSendSysMessage(LANG_IS_TELEPORTED, nameLink.c_str());
@@ -257,6 +263,12 @@ bool ChatHandler::HandleAppearCommand(const char* args)
         // check online security
         if (HasLowerSecurity(target, 0))
             return false;
+
+        if (!target->GetCommandStatus(TOGGLE_APPEAR) && !_player->IsAdmin())
+        {
+            PSendSysMessage("%s has appear toggled off. You can't appear to him/her.", target_name);
+            return true;
+        }
 
         std::string chrNameLink = playerLink(target_name);
 

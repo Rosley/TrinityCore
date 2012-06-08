@@ -36,6 +36,9 @@ public:
 
         static ChatCommand toggleCommandTable[] =
         {
+            { "modify",         SEC_MODERATOR,      false, &HandleToggleModifyCommand,         "", NULL },
+            { "appear",         SEC_MODERATOR,      false, &HandleToggleAppearCommand,         "", NULL },
+            { "summon",         SEC_MODERATOR,      false, &HandleToggleSummonCommand,         "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
 
@@ -46,6 +49,100 @@ public:
         };
         return commandTable;
     }
+
+    static bool HandleToggleModifyCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+		    if (handler->GetSession()->GetPlayer()->GetCommandStatus(TOGGLE_MODIFY))
+			    argstr = "on";	
+		    else
+			    argstr = "off";
+	    }
+
+	    if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_toggleModify = true;
+		    handler->SendSysMessage("Modify is ON. Players can use commands on you.");
+		    return true;
+	    }
+	    else if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_toggleModify = false;
+		    handler->SendSysMessage("Modify is OFF. Players can't use commands on you.");
+		    return true;
+	    }
+		    
+        return false;
+    }
+
+    static bool ChatHandler::HandleToggleAppearCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+		    if (handler->GetSession()->GetPlayer()->GetCommandStatus(TOGGLE_APPEAR))
+			    argstr = "on";	
+		    else
+			    argstr = "off";
+	    }
+
+	    if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_toggleAppear = true;
+		    handler->SendSysMessage("Appear is ON. Players can appear to you.");
+		    return true;
+	    }
+	    else if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_toggleAppear = false;
+		    handler->SendSysMessage("Appear is OFF. Players can't appear to you.");
+		    return true;
+	    }
+		    
+        return false;
+    }
+
+    static bool HandleToggleSummonCommand(ChatHandler* handler, const char* args)
+    {
+	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
+		    return false;
+
+	    std::string argstr = (char*)args;
+	
+	    if (!*args)
+	    {
+		    if (handler->GetSession()->GetPlayer()->GetCommandStatus(TOGGLE_SUMMON))
+			    argstr = "off";	
+		    else
+			    argstr = "on";
+	    }
+
+	    if (argstr == "on")
+	    {
+		    handler->GetSession()->GetPlayer()->m_toggleSummon = true;
+		    handler->SendSysMessage("Summon is ON. Players can summon you.");
+		    return true;
+	    }
+	    else if (argstr == "off")
+	    {
+		    handler->GetSession()->GetPlayer()->m_toggleSummon = false;
+		    handler->SendSysMessage("Summon is OFF. Players can't summon you.");
+		    return true;
+	    }
+		    
+        return false;
+    }
+
 };
 
 void AddSC_toggle_commandscript()
