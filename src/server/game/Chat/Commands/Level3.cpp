@@ -276,7 +276,7 @@ bool ChatHandler::HandleAddItemCommand(const char *args)
         return true;
     }
 
-    if (!m_session->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, itemId) && !m_session->GetPlayer())
+    if (!m_session->GetPlayer()->CanUseID(DISABLE_TYPE_ITEM, itemId) && !m_session->GetPlayer()->IsAdmin())
     {
         PSendSysMessage("This item (id '%u') is disabled.", itemId);
         return true;

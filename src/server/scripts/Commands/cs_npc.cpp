@@ -127,7 +127,7 @@ public:
         bool save = false;
 	    char* savestr = strtok(NULL, " ");
 
-        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id) && !handler->GetSession()->GetPlayer())
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id) && !handler->GetSession()->GetPlayer()->IsAdmin())
         {
             handler->PSendSysMessage("This NPC (id '%u') is disabled.", id);
             return true;

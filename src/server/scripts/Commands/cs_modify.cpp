@@ -1348,7 +1348,7 @@ public:
 
         uint16 display_id = (uint16)atoi((char*)args);
 
-        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_DISPLAYID, display_id) && !handler->GetSession()->GetPlayer())
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_DISPLAYID, display_id) && !handler->GetSession()->GetPlayer()->IsAdmin())
         {
             handler->PSendSysMessage("This displayid (id '%u') is disabled.", display_id);
             return true;
