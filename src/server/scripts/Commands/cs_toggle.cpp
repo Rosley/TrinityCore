@@ -60,9 +60,9 @@ public:
 	    if (!*args)
 	    {
 		    if (handler->GetSession()->GetPlayer()->GetCommandStatus(TOGGLE_MODIFY))
-			    argstr = "on";	
+			    argstr = "off";	
 		    else
-			    argstr = "off";
+			    argstr = "on";
 	    }
 
 	    if (argstr == "on")
@@ -91,9 +91,9 @@ public:
 	    if (!*args)
 	    {
 		    if (handler->GetSession()->GetPlayer()->GetCommandStatus(TOGGLE_APPEAR))
-			    argstr = "on";	
+			    argstr = "off";	
 		    else
-			    argstr = "off";
+			    argstr = "on";
 	    }
 
 	    if (argstr == "on")
