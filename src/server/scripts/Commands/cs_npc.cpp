@@ -1552,11 +1552,15 @@ public:
 
     static bool HandlePossessCommand(ChatHandler* handler, const char * /*args*/)
     {
-        Unit* unit = handler->getSelectedUnit();
-        if (!unit)
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
-        handler->GetSession()->GetPlayer()->CastSpell(unit, 530, true);
+        handler->GetSession()->GetPlayer()->CastSpell(creature, 530, true);
         return true;
     }
 

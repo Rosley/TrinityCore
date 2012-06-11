@@ -1204,3 +1204,108 @@ bool ChatHandler::HandleCharacterTitlesCommand(const char* args)
     }
     return true;
 }
+
+    bool ChatHandler::HandleCharacterSetStandingCommand(const char* args)
+    {
+        if (!*args)
+            return false;
+
+        Player* target = getSelectedPlayer();
+        if (!target)
+        {
+            SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        // check online security
+        if (HasLowerSecurity(target, 0))
+            return false;
+
+        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !m_session->GetPlayer()->IsAdmin() && m_session->GetPlayer()->GetGUID() != target->GetGUID())
+        {
+            PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
+            return true;
+        }
+
+        char* factionTxt = extractKeyFromLink((char*)args, "Hfaction");
+        if (!factionTxt)
+            return false;
+
+        uint32 factionId = atoi(factionTxt);
+
+        int32 amount = 0;
+        char *rankTxt = strtok(NULL, " ");
+        if (!factionTxt || !rankTxt)
+            return false;
+
+        amount = atoi(rankTxt);
+        if ((amount == 0) && (rankTxt[0] != '-') && !isdigit(rankTxt[0]))
+        {
+            std::string rankStr = rankTxt;
+            std::wstring wrankStr;
+            if (!Utf8toWStr(rankStr, wrankStr))
+                return false;
+            wstrToLower(wrankStr);
+
+            int r = 0;
+            amount = -42000;
+            for (; r < MAX_REPUTATION_RANK; ++r)
+            {
+                std::string rank = GetTrinityString(ReputationRankStrIndex[r]);
+                if (rank.empty())
+                    continue;
+
+                std::wstring wrank;
+                if (!Utf8toWStr(rank, wrank))
+                    continue;
+
+                wstrToLower(wrank);
+
+                if (wrank.substr(0, wrankStr.size()) == wrankStr)
+                {
+                    char *deltaTxt = strtok(NULL, " ");
+                    if (deltaTxt)
+                    {
+                        int32 delta = atoi(deltaTxt);
+                        if ((delta < 0) || (delta > ReputationMgr::PointsInRank[r] -1))
+                        {
+                            PSendSysMessage(LANG_COMMAND_FACTION_DELTA, (ReputationMgr::PointsInRank[r]-1));
+                            SetSentErrorMessage(true);
+                            return false;
+                        }
+                        amount += delta;
+                    }
+                    break;
+                }
+                amount += ReputationMgr::PointsInRank[r];
+            }
+            if (r >= MAX_REPUTATION_RANK)
+            {
+                PSendSysMessage(LANG_COMMAND_FACTION_INVPARAM, rankTxt);
+                SetSentErrorMessage(true);
+                return false;
+            }
+        }
+
+        FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionId);
+
+        if (!factionEntry)
+        {
+            PSendSysMessage(LANG_COMMAND_FACTION_UNKNOWN, factionId);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (factionEntry->reputationListID < 0)
+        {
+            PSendSysMessage(LANG_COMMAND_FACTION_NOREP_ERROR, factionEntry->name[handler->GetSessionDbcLocale()], factionId);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        target->GetReputationMgr().SetOneFactionReputation(factionEntry, amount, false);
+        PSendSysMessage(LANG_COMMAND_MODIFY_REP, factionEntry->name[handler->GetSessionDbcLocale()], factionId,
+        GetNameLink(target).c_str(), target->GetReputationMgr().GetReputation(factionEntry));
+        return true;
+    }

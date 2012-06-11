@@ -1371,6 +1371,7 @@ public:
             }
         }
 
+        handler->PSendSysMessage("Set target's displayId to %u", display_id);
         target->SetDisplayId(display_id);
 
         return true;

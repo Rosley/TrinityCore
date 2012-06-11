@@ -123,6 +123,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "rename",         SEC_GAMEMASTER,     true,  OldHandler<&ChatHandler::HandleCharacterRenameCommand>,        "", NULL },
         { "reputation",     SEC_GAMEMASTER,     true,  OldHandler<&ChatHandler::HandleCharacterReputationCommand>,    "", NULL },
         { "showtitles",     SEC_GAMEMASTER,     true,  OldHandler<&ChatHandler::HandleCharacterTitlesCommand>,        "", NULL },
+        { "setstanding",    SEC_GAMEMASTER,     true,  OldHandler<&ChatHandler::HandleCharacterSetStandingCommandCommand>,"", NULL },
         { NULL,             0,                  false, NULL,                                              "", NULL }
     };
 
