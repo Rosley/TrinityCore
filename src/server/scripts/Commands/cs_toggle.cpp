@@ -81,7 +81,7 @@ public:
         return false;
     }
 
-    static bool ChatHandler::HandleToggleAppearCommand(ChatHandler* handler, const char* args)
+    static bool HandleToggleAppearCommand(ChatHandler* handler, const char* args)
     {
 	    if (!handler->GetSession() && !handler->GetSession()->GetPlayer())
 		    return false;
