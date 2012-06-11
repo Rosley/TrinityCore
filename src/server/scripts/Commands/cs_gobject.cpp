@@ -76,7 +76,7 @@ public:
 		if (!*args)
             return false;
 
-		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()) && !handler->GetSession()->GetPlayer()->IsAdmin())
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
 		{
 			handler->SendSysMessage("Spawning is prohibited in this zone.");
 			return true;
@@ -87,7 +87,7 @@ public:
         bool save = false;
 	    char* savestr = strtok(NULL, " ");
 
-        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_GOBJECT, id) && !handler->GetSession()->GetPlayer()->IsAdmin())
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_GOBJECT, id))
         {
             handler->PSendSysMessage("This gobject (id '%u') is disabled.", id);
             return true;

@@ -101,7 +101,7 @@ public:
     #define TIME_BETWEEN_SPAWNS_MILLIS 15000
 	static bool HandleDetermineNpcSpawn(ChatHandler* handler, const char* args)
     {
-		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()) && !handler->GetSession()->GetPlayer()->IsAdmin())
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
 		{
 			handler->SendSysMessage("Spawning is prohibited in this zone.");
 			return true;
@@ -127,7 +127,7 @@ public:
         bool save = false;
 	    char* savestr = strtok(NULL, " ");
 
-        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id) && !handler->GetSession()->GetPlayer()->IsAdmin())
+        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id))
         {
             handler->PSendSysMessage("This NPC (id '%u') is disabled.", id);
             return true;
