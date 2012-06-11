@@ -37,12 +37,6 @@ public:
 
     ChatCommand* GetCommands() const
     {
-        /*static ChatCommand gobjectAddCommandTable[] =
-        {
-            { "temp",           SEC_GAMEMASTER,     false, &HandleGameObjectAddTempCommand,   "", NULL },
-            { "",               SEC_GAMEMASTER,     false, &HandleDetermineGobjectSpawn,      "", NULL },
-            { NULL,             0,                  false, NULL,                              "", NULL }
-        };*/
         static ChatCommand gobjectSetCommandTable[] =
         {
             { "phase",          SEC_GAMEMASTER,     false, &HandleGameObjectSetPhaseCommand,  "", NULL },
@@ -700,19 +694,19 @@ public:
         WorldObject* obj = handler->getSelectedObject();
         Player* player = handler->GetSession()->GetPlayer();
 
+        if (!obj)
+        {
+            handler->SendSysMessage("No objects in range!");
+            return true;
+        }
+
         float distX = player->GetPositionX() - obj->GetPositionX();
         float distY = player->GetPositionY() - obj->GetPositionY();
         float distZ = player->GetPositionZ() - obj->GetPositionZ();
 
         float distance = sqrtf(distZ * distZ + distY * distY + distX * distX);
-
-        if (!*args)
-        {
-            if (obj)
-                entry = obj->GetEntry();
-            else
-                entry = atoi((char*)args);
-        }
+            
+        entry = obj->GetEntry();
 
         GameObjectTemplate const* goinfo = sObjectMgr->GetGameObjectTemplate(entry);
 
@@ -722,7 +716,6 @@ public:
         name = goinfo->name;
         guid = obj->ToGameObject()->GetGUIDLow();
 
-        //TODO: What's the .3 for? Is it needed in trinity?
         handler->PSendSysMessage("Selected GameObject [ %s ](ID: %u) which is %f feet away from you.", name.c_str(), entry, distance);
         handler->GetSession()->GetPlayer()->SetSelectedGobject(guid);
 
