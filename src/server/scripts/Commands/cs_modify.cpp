@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,53 +22,64 @@ Comment: All modify related commands
 Category: commandscripts
 EndScriptData */
 
-#include "ScriptMgr.h"
-#include "ObjectMgr.h"
 #include "Chat.h"
+#include "ObjectMgr.h"
+#include "Opcodes.h"
+#include "Pet.h"
+#include "Player.h"
+#include "ReputationMgr.h"
+#include "ScriptMgr.h"
 #include "DisableMgr.h"
-#include "WeatherMgr.h"
+
 
 class modify_commandscript : public CommandScript
 {
 public:
     modify_commandscript() : CommandScript("modify_commandscript") { }
 
-    ChatCommand* GetCommands() const
+    ChatCommand* GetCommands() const override
     {
+        static ChatCommand modifyspeedCommandTable[] =
+        {
+            { "all",      rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_ALL,      false, &HandleModifyASpeedCommand, "", NULL },
+            { "backwalk", rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_BACKWALK, false, &HandleModifyBWalkCommand,  "", NULL },
+            { "fly",      rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_FLY,      false, &HandleModifyFlyCommand,    "", NULL },
+            { "walk",     rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_WALK,     false, &HandleModifySpeedCommand,  "", NULL },
+            { "swim",     rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_SWIM,     false, &HandleModifySwimCommand,   "", NULL },
+            { "",         rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,          false, &HandleModifyASpeedCommand, "", NULL },
+            { NULL,       0,                                       false, NULL,                       "", NULL }
+        };
         static ChatCommand modifyCommandTable[] =
         {
-            { "hp",             SEC_MODERATOR,      false, &HandleModifyHPCommand,            "", NULL },
-            { "mana",           SEC_MODERATOR,      false, &HandleModifyManaCommand,          "", NULL },
-            { "rage",           SEC_MODERATOR,      false, &HandleModifyRageCommand,          "", NULL },
-            { "runicpower",     SEC_MODERATOR,      false, &HandleModifyRunicPowerCommand,    "", NULL },
-            { "energy",         SEC_MODERATOR,      false, &HandleModifyEnergyCommand,        "", NULL },
-            { "gold",           SEC_MODERATOR,      false, &HandleModifyMoneyCommand,         "", NULL },
-            { "scale",          SEC_MODERATOR,      false, &HandleModifyScaleCommand,         "", NULL },
-            { "bit",            SEC_MODERATOR,      false, &HandleModifyBitCommand,           "", NULL },
-            { "faction",        SEC_MODERATOR,      false, &HandleModifyFactionCommand,       "", NULL },
-            { "spell",          SEC_MODERATOR,      false, &HandleModifySpellCommand,         "", NULL },
-            { "talentpoints",   SEC_MODERATOR,      false, &HandleModifyTalentCommand,        "", NULL },
-            { "honor",          SEC_MODERATOR,      false, &HandleModifyHonorCommand,         "", NULL },
-            { "reputation",     SEC_GAMEMASTER,     false, &HandleModifyRepCommand,           "", NULL },
-            { "arenapoints",    SEC_MODERATOR,      false, &HandleModifyArenaCommand,         "", NULL },
-            { "drunkstate",     SEC_MODERATOR,      false, &HandleModifyDrunkCommand,         "", NULL },
-            { "standstate",     SEC_GAMEMASTER,     false, &HandleModifyStandStateCommand,    "", NULL },
-            { "phase",          SEC_ADMINISTRATOR,  false, &HandleModifyPhaseCommand,         "", NULL },
-            { "gender",         SEC_GAMEMASTER,     false, &HandleModifyGenderCommand,        "", NULL },
-            { "announcecolor",  SEC_MODERATOR,      false, &HandleModifyAnnounceColorCommand, "", NULL },
-            { "displayid",      SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,         "", NULL },
-            { "speed",          SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
-            { "nudgedistance",  SEC_MODERATOR,      false, &HandleModifyNudgeDistanceCommand, "", NULL },
-            { "level",          SEC_MODERATOR,      false, &HandleModifyLevelCommand,         "", NULL },
-            { "weather",        SEC_ADMINISTRATOR,  false, &HandleChangeWeather,              "", NULL },
-            { NULL,             0,                  false, NULL,                                           "", NULL }
+            { "arenapoints",  rbac::RBAC_PERM_COMMAND_MODIFY_ARENAPOINTS,  false, &HandleModifyArenaCommand,         "", NULL },
+            { "bit",          rbac::RBAC_PERM_COMMAND_MODIFY_BIT,          false, &HandleModifyBitCommand,           "", NULL },
+            { "drunk",        rbac::RBAC_PERM_COMMAND_MODIFY_DRUNK,        false, &HandleModifyDrunkCommand,         "", NULL },
+			{ "displayid",    rbac::RBAC_PERM_COMMAND_MORPH,               false, &HandleModifyMorphCommand,         "", NULL },
+            { "energy",       rbac::RBAC_PERM_COMMAND_MODIFY_ENERGY,       false, &HandleModifyEnergyCommand,        "", NULL },
+            { "faction",      rbac::RBAC_PERM_COMMAND_MODIFY_FACTION,      false, &HandleModifyFactionCommand,       "", NULL },
+            { "gender",       rbac::RBAC_PERM_COMMAND_MODIFY_GENDER,       false, &HandleModifyGenderCommand,        "", NULL },
+			{ "level",        rbac::RBAC_PERM_COMMAND_CHARACTER_LEVEL,     true,  &HandleCharacterLevelCommand,      "", NULL },
+            { "honor",        rbac::RBAC_PERM_COMMAND_MODIFY_HONOR,        false, &HandleModifyHonorCommand,         "", NULL },
+            { "hp",           rbac::RBAC_PERM_COMMAND_MODIFY_HP,           false, &HandleModifyHPCommand,            "", NULL },
+            { "mana",         rbac::RBAC_PERM_COMMAND_MODIFY_MANA,         false, &HandleModifyManaCommand,          "", NULL },
+            { "gold",         rbac::RBAC_PERM_COMMAND_MODIFY_MONEY,        false, &HandleModifyMoneyCommand,         "", NULL },
+            { "mount",        rbac::RBAC_PERM_COMMAND_MODIFY_MOUNT,        false, &HandleModifyMountCommand,         "", NULL },
+            { "phase",        rbac::RBAC_PERM_COMMAND_MODIFY_PHASE,        false, &HandleModifyPhaseCommand,         "", NULL },
+            { "rage",         rbac::RBAC_PERM_COMMAND_MODIFY_RAGE,         false, &HandleModifyRageCommand,          "", NULL },
+            { "reputation",   rbac::RBAC_PERM_COMMAND_MODIFY_REPUTATION,   false, &HandleModifyRepCommand,           "", NULL },
+            { "runicpower",   rbac::RBAC_PERM_COMMAND_MODIFY_RUNICPOWER,   false, &HandleModifyRunicPowerCommand,    "", NULL },
+            { "scale",        rbac::RBAC_PERM_COMMAND_MODIFY_SCALE,        false, &HandleModifyScaleCommand,         "", NULL },
+            { "speed",        rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,        false, NULL,           "", modifyspeedCommandTable },
+            { "spell",        rbac::RBAC_PERM_COMMAND_MODIFY_SPELL,        false, &HandleModifySpellCommand,         "", NULL },
+            { "standstate",   rbac::RBAC_PERM_COMMAND_MODIFY_STANDSTATE,   false, &HandleModifyStandStateCommand,    "", NULL },
+            { "talentpoints", rbac::RBAC_PERM_COMMAND_MODIFY_TALENTPOINTS, false, &HandleModifyTalentCommand,        "", NULL },
+            { NULL,           0,                                     false, NULL,                              "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "mount",          SEC_MODERATOR,      false, &HandleMountCommand,                "", NULL },
-            { "demorph",        SEC_GAMEMASTER,     false, &HandleDeMorphCommand,              "", NULL },
-            { "modify",         SEC_MODERATOR,      false, NULL,                 "", modifyCommandTable },
-            { NULL,             0,                  false, NULL,                               "", NULL }
+            { "demorph", rbac::RBAC_PERM_COMMAND_DEMORPH, false, &HandleDeMorphCommand,              "", NULL },
+            { "modify",  rbac::RBAC_PERM_COMMAND_MODIFY,  false, NULL,                 "", modifyCommandTable },
+            { NULL,      0,                         false, NULL,                               "", NULL }
         };
         return commandTable;
     }
@@ -97,18 +108,18 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         if (handler->HasLowerSecurity(target, 0))
             return false;
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_HP, handler->GetNameLink(target).c_str(), hp, hpm);
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_HP_CHANGED, handler->GetNameLink().c_str(), hp, hpm);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_HP_CHANGED, handler->GetNameLink().c_str(), hp, hpm);
 
         target->SetMaxHealth(hpm);
         target->SetHealth(hp);
@@ -140,11 +151,11 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         // check online security
         if (handler->HasLowerSecurity(target, 0))
@@ -152,7 +163,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_MANA, handler->GetNameLink(target).c_str(), mana, manam);
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_MANA_CHANGED, handler->GetNameLink().c_str(), mana, manam);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_MANA_CHANGED, handler->GetNameLink().c_str(), mana, manam);
 
         target->SetMaxPower(POWER_MANA, manam);
         target->SetPower(POWER_MANA, mana);
@@ -195,11 +206,11 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         // check online security
         if (handler->HasLowerSecurity(target, 0))
@@ -207,12 +218,12 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_ENERGY, handler->GetNameLink(target).c_str(), energy/10, energym/10);
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_ENERGY_CHANGED, handler->GetNameLink().c_str(), energy/10, energym/10);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_ENERGY_CHANGED, handler->GetNameLink().c_str(), energy/10, energym/10);
 
         target->SetMaxPower(POWER_ENERGY, energym);
         target->SetPower(POWER_ENERGY, energy);
 
-        sLog->outDetail(handler->GetTrinityString(LANG_CURRENT_ENERGY), target->GetMaxPower(POWER_ENERGY));
+        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_CURRENT_ENERGY), target->GetMaxPower(POWER_ENERGY));
 
         return true;
     }
@@ -252,11 +263,11 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         // check online security
         if (handler->HasLowerSecurity(target, 0))
@@ -264,7 +275,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_RAGE, handler->GetNameLink(target).c_str(), rage/10, ragem/10);
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_RAGE_CHANGED, handler->GetNameLink().c_str(), rage/10, ragem/10);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_RAGE_CHANGED, handler->GetNameLink().c_str(), rage/10, ragem/10);
 
         target->SetMaxPower(POWER_RAGE, ragem);
         target->SetPower(POWER_RAGE, rage);
@@ -296,15 +307,15 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_RUNIC_POWER, handler->GetNameLink(target).c_str(), rune/10, runem/10);
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_RUNIC_POWER_CHANGED, handler->GetNameLink().c_str(), rune/10, runem/10);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_RUNIC_POWER_CHANGED, handler->GetNameLink().c_str(), rune/10, runem/10);
 
         target->SetMaxPower(POWER_RUNIC_POWER, runem);
         target->SetPower(POWER_RUNIC_POWER, rune);
@@ -320,7 +331,7 @@ public:
 
         char* pfactionid = handler->extractKeyFromLink((char*)args, "Hfaction");
 
-        Unit* target = handler->getSelectedUnit();
+		Unit* target = handler->getSelectedUnit();
         if (!target)
         {
             handler->SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
@@ -330,32 +341,30 @@ public:
 
         if (!pfactionid)
         {
-            if (target)
-            {
-                uint32 factionid = target->getFaction();
-                uint32 flag      = target->GetUInt32Value(UNIT_FIELD_FLAGS);
-                uint32 npcflag   = target->GetUInt32Value(UNIT_NPC_FLAGS);
-                uint32 dyflag    = target->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
-                handler->PSendSysMessage(LANG_CURRENT_FACTION, target->GetGUIDLow(), factionid, flag, npcflag, dyflag);
-            }
+            uint32 factionid = target->getFaction();
+            uint32 flag      = target->GetUInt32Value(UNIT_FIELD_FLAGS);
+            uint32 npcflag   = target->GetUInt32Value(UNIT_NPC_FLAGS);
+            uint32 dyflag    = target->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
+            handler->PSendSysMessage(LANG_CURRENT_FACTION, target->GetGUIDLow(), factionid, flag, npcflag, dyflag);
             return true;
         }
 
-        if (!target)
-        {
-            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
+		Player* player = handler->GetSession()->GetPlayer();
 
-        if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-            {
-                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                return true;
-            }
-        }
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
+		{
+			handler->SendSysMessage("Modifying NPC factions is prohibited in this zone.");
+			return true;
+		}
+
+		if (target->GetTypeId() == TYPEID_PLAYER)
+		{
+			if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+			{
+				handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+				return true;
+			}
+		}
 
         uint32 factionid = atoi(pfactionid);
         uint32 flag;
@@ -370,7 +379,7 @@ public:
 
         uint32 npcflag;
         if (!pnpcflag)
-            npcflag   = target->GetUInt32Value(UNIT_NPC_FLAGS);
+            npcflag = target->GetUInt32Value(UNIT_NPC_FLAGS);
         else
             npcflag = atoi(pnpcflag);
 
@@ -378,7 +387,7 @@ public:
 
         uint32  dyflag;
         if (!pdyflag)
-            dyflag   = target->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
+            dyflag = target->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
         else
             dyflag = atoi(pdyflag);
 
@@ -441,15 +450,9 @@ public:
         if (handler->HasLowerSecurity(target, 0))
             return false;
 
-        if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
-
         handler->PSendSysMessage(LANG_YOU_CHANGE_SPELLFLATID, spellflatid, val, mark, handler->GetNameLink(target).c_str());
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_SPELLFLATID_CHANGED, handler->GetNameLink().c_str(), spellflatid, val, mark);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_SPELLFLATID_CHANGED, handler->GetNameLink().c_str(), spellflatid, val, mark);
 
         WorldPacket data(SMSG_SET_FLAT_SPELL_MODIFIER, (1+1+2+2));
         data << uint8(spellflatid);
@@ -480,21 +483,21 @@ public:
         }
 
         if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-            {
-                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                return true;
-            }
-            
-            // check online security
+        {	
+			if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+			{
+				handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+				return true;
+			}
+
+			// check online security
             if (handler->HasLowerSecurity(target->ToPlayer(), 0))
                 return false;
             target->ToPlayer()->SetFreeTalentPoints(tp);
             target->ToPlayer()->SendTalentsInfoData(false);
             return true;
         }
-        else if (target->ToCreature()->isPet())
+        else if (target->ToCreature()->IsPet())
         {
             Unit* owner = target->GetOwner();
             if (owner && owner->GetTypeId() == TYPEID_PLAYER && ((Pet*)target)->IsPermanentPetFor(owner->ToPlayer()))
@@ -528,7 +531,7 @@ public:
             return false;
         }
 
-        Player* target = handler->getSelectedPlayer();
+        Player* target = handler->getSelectedPlayerOrSelf();
         if (!target)
         {
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
@@ -536,11 +539,11 @@ public:
             return false;
         }
 
-        if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         // check online security
         if (handler->HasLowerSecurity(target, 0))
@@ -548,7 +551,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->isInFlight())
+        if (target->IsInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -557,7 +560,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_ASPEED, ASpeed, targetNameLink.c_str());
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_ASPEED_CHANGED, handler->GetNameLink().c_str(), ASpeed);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_ASPEED_CHANGED, handler->GetNameLink().c_str(), ASpeed);
 
         target->SetSpeed(MOVE_WALK,    ASpeed, true);
         target->SetSpeed(MOVE_RUN,     ASpeed, true);
@@ -582,7 +585,7 @@ public:
             return false;
         }
 
-        Player* target = handler->getSelectedPlayer();
+        Player* target = handler->getSelectedPlayerOrSelf();
         if (!target)
         {
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
@@ -596,7 +599,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->isInFlight())
+        if (target->IsInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -605,7 +608,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_SPEED, Speed, targetNameLink.c_str());
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_SPEED_CHANGED, handler->GetNameLink().c_str(), Speed);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_SPEED_CHANGED, handler->GetNameLink().c_str(), Speed);
 
         target->SetSpeed(MOVE_RUN, Speed, true);
 
@@ -627,7 +630,7 @@ public:
             return false;
         }
 
-        Player* target = handler->getSelectedPlayer();
+        Player* target = handler->getSelectedPlayerOrSelf();
         if (!target)
         {
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
@@ -641,7 +644,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->isInFlight())
+        if (target->IsInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -650,7 +653,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_SWIM_SPEED, Swim, targetNameLink.c_str());
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_SWIM_SPEED_CHANGED, handler->GetNameLink().c_str(), Swim);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_SWIM_SPEED_CHANGED, handler->GetNameLink().c_str(), Swim);
 
         target->SetSpeed(MOVE_SWIM, Swim, true);
 
@@ -672,7 +675,7 @@ public:
             return false;
         }
 
-        Player* target = handler->getSelectedPlayer();
+        Player* target = handler->getSelectedPlayerOrSelf();
         if (!target)
         {
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
@@ -686,7 +689,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->isInFlight())
+        if (target->IsInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -695,7 +698,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_BACK_SPEED, BSpeed, targetNameLink.c_str());
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_BACK_SPEED_CHANGED, handler->GetNameLink().c_str(), BSpeed);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_BACK_SPEED_CHANGED, handler->GetNameLink().c_str(), BSpeed);
 
         target->SetSpeed(MOVE_RUN_BACK, BSpeed, true);
 
@@ -717,7 +720,7 @@ public:
             return false;
         }
 
-        Player* target = handler->getSelectedPlayer();
+        Player* target = handler->getSelectedPlayerOrSelf();
         if (!target)
         {
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
@@ -731,7 +734,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_FLY_SPEED, FSpeed, handler->GetNameLink(target).c_str());
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOURS_FLY_SPEED_CHANGED, handler->GetNameLink().c_str(), FSpeed);
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_FLY_SPEED_CHANGED, handler->GetNameLink().c_str(), FSpeed);
 
         target->SetSpeed(MOVE_FLIGHT, FSpeed, true);
 
@@ -760,25 +763,42 @@ public:
             return false;
         }
 
-        if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (Player* player = target->ToPlayer())
-            {
-                // check online security
-                if (handler->HasLowerSecurity(player, 0))
-                    return false;
+		Player* player = handler->GetSession()->GetPlayer();
 
-                if (!player->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-                {
-                    handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                    return true;
-                }
+		if (target->GetTypeId() == TYPEID_PLAYER)
+		{
+			if (Player* playerTarget = target->ToPlayer())
+			{
+				// check online security
+				if (handler->HasLowerSecurity(player, 0))
+					return false;
 
-                handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE, Scale, handler->GetNameLink(player).c_str());
-                if (handler->needReportToTarget(player))
-                    (ChatHandler(player)).PSendSysMessage(LANG_YOURS_SIZE_CHANGED, handler->GetNameLink().c_str(), Scale);
-            }
-        }
+				if (!playerTarget->GetCommandStatus(TOGGLE_MODIFY) && !player->IsAdmin() && player->GetGUID() != playerTarget->GetGUID())
+				{
+					handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", playerTarget->GetName().c_str());
+					return true;
+				}
+
+				handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE, Scale, handler->GetNameLink(player).c_str());
+				if (handler->needReportToTarget(player))
+					(handler->PSendSysMessage(LANG_YOURS_SIZE_CHANGED, handler->GetNameLink().c_str(), Scale));
+			}
+		}
+
+		else
+		{
+			if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
+			{
+				handler->SendSysMessage("Scaling NPCs is prohibited in this zone.");
+				return true;
+			}
+		}
+
+		if (Scale > 2 && !handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
+		{
+			handler->SendSysMessage("You can't scale above 2 in this zone.");
+			return true;
+		}
 
         target->SetObjectScale(Scale);
 
@@ -1025,7 +1045,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_GIVE_MOUNT, handler->GetNameLink(target).c_str());
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_MOUNT_GIVED, handler->GetNameLink().c_str());
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_MOUNT_GIVED, handler->GetNameLink().c_str());
 
         target->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP);
         target->Mount(mId);
@@ -1060,57 +1080,61 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         // check online security
         if (handler->HasLowerSecurity(target, 0))
             return false;
 
-        int32 addmoney = atoi((char*)args);
+        int32 moneyToAdd = 0;
+        if (strchr(args, 'g') || strchr(args, 's') || strchr(args, 'c'))
+            moneyToAdd = MoneyStringToMoney(std::string(args));
+        else
+            moneyToAdd = atoi(args);
 
-        uint32 moneyuser = target->GetMoney();
+        uint32 targetMoney = target->GetMoney();
 
-        if (addmoney < 0)
+        if (moneyToAdd < 0)
         {
-            int32 newmoney = int32(moneyuser) + addmoney;
+            int32 newmoney = int32(targetMoney) + moneyToAdd;
 
-            sLog->outDetail(handler->GetTrinityString(LANG_CURRENT_MONEY), moneyuser, addmoney, newmoney);
+            TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_CURRENT_MONEY), targetMoney, moneyToAdd, newmoney);
             if (newmoney <= 0)
             {
                 handler->PSendSysMessage(LANG_YOU_TAKE_ALL_MONEY, handler->GetNameLink(target).c_str());
                 if (handler->needReportToTarget(target))
-                    (ChatHandler(target)).PSendSysMessage(LANG_YOURS_ALL_MONEY_GONE, handler->GetNameLink().c_str());
+                    ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_ALL_MONEY_GONE, handler->GetNameLink().c_str());
 
                 target->SetMoney(0);
             }
             else
             {
-                if (newmoney > MAX_MONEY_AMOUNT)
+                if (newmoney > static_cast<int32>(MAX_MONEY_AMOUNT))
                     newmoney = MAX_MONEY_AMOUNT;
 
-                handler->PSendSysMessage(LANG_YOU_TAKE_MONEY, abs(addmoney), handler->GetNameLink(target).c_str());
+                handler->PSendSysMessage(LANG_YOU_TAKE_MONEY, abs(moneyToAdd), handler->GetNameLink(target).c_str());
                 if (handler->needReportToTarget(target))
-                    (ChatHandler(target)).PSendSysMessage(LANG_YOURS_MONEY_TAKEN, handler->GetNameLink().c_str(), abs(addmoney));
+                    ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_MONEY_TAKEN, handler->GetNameLink().c_str(), abs(moneyToAdd));
                 target->SetMoney(newmoney);
             }
         }
         else
         {
-            handler->PSendSysMessage(LANG_YOU_GIVE_MONEY, addmoney, handler->GetNameLink(target).c_str());
+            handler->PSendSysMessage(LANG_YOU_GIVE_MONEY, moneyToAdd, handler->GetNameLink(target).c_str());
             if (handler->needReportToTarget(target))
-                (ChatHandler(target)).PSendSysMessage(LANG_YOURS_MONEY_GIVEN, handler->GetNameLink().c_str(), addmoney);
+                ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_MONEY_GIVEN, handler->GetNameLink().c_str(), moneyToAdd);
 
-            if (addmoney >=MAX_MONEY_AMOUNT)
-                target->SetMoney(MAX_MONEY_AMOUNT);
-            else
-                target->ModifyMoney(addmoney);
+            if (targetMoney >= MAX_MONEY_AMOUNT - moneyToAdd)
+                moneyToAdd -= targetMoney;
+
+            target->ModifyMoney(moneyToAdd);
         }
 
-        sLog->outDetail(handler->GetTrinityString(LANG_NEW_MONEY), moneyuser, addmoney, target->GetMoney());
+        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_NEW_MONEY), targetMoney, moneyToAdd, target->GetMoney());
 
         return true;
     }
@@ -1127,15 +1151,6 @@ public:
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
             return false;
-        }
-
-        if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-            {
-                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                return true;
-            }
         }
 
         // check online security
@@ -1192,12 +1207,6 @@ public:
             return false;
         }
 
-        if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
-
         // check online security
         if (handler->HasLowerSecurity(target, 0))
             return false;
@@ -1213,25 +1222,26 @@ public:
 
     static bool HandleModifyDrunkCommand(ChatHandler* handler, const char* args)
     {
-        if (!*args)    return false;
+        if (!*args)
+            return false;
 
-        uint32 drunklevel = (uint32)atoi(args);
+        uint8 drunklevel = (uint8)atoi(args);
         if (drunklevel > 100)
             drunklevel = 100;
 
-        uint16 drunkMod = drunklevel * 0xFFFF / 100;
+		Player* target = handler->getSelectedPlayer();
+		if (!target)
+			target = handler->GetSession()->GetPlayer();
 
-        Player* target = handler->getSelectedPlayer();
-        if (!target)
-            target = handler->GetSession()->GetPlayer();
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+        if (Player* target = handler->getSelectedPlayer())
+            target->SetDrunkValue(drunklevel);
 
-        target->SetDrunkValue(drunkMod);
         return true;
     }
 
@@ -1252,11 +1262,11 @@ public:
         if (handler->HasLowerSecurity(target, 0))
             return false;
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         char* factionTxt = handler->extractKeyFromLink((char*)args, "Hfaction");
         if (!factionTxt)
@@ -1266,7 +1276,7 @@ public:
 
         int32 amount = 0;
         char *rankTxt = strtok(NULL, " ");
-        if (!factionTxt || !rankTxt)
+        if (!factionId || !rankTxt)
             return false;
 
         amount = atoi(rankTxt);
@@ -1335,6 +1345,7 @@ public:
         }
 
         target->GetReputationMgr().SetOneFactionReputation(factionEntry, amount, false);
+        target->GetReputationMgr().SendState(target->GetReputationMgr().GetState(factionEntry));
         handler->PSendSysMessage(LANG_COMMAND_MODIFY_REP, factionEntry->name[handler->GetSessionDbcLocale()], factionId,
             handler->GetNameLink(target).c_str(), target->GetReputationMgr().GetReputation(factionEntry));
         return true;
@@ -1348,11 +1359,11 @@ public:
 
         uint16 display_id = (uint16)atoi((char*)args);
 
-        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_DISPLAYID, display_id))
-        {
-            handler->PSendSysMessage("This displayid (id '%u') is disabled.", display_id);
-            return true;
-        }
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_DISPLAYID, display_id))
+		{
+			handler->PSendSysMessage("This displayid (id '%u') is disabled.", display_id);
+			return true;
+		}
 
         Unit* target = handler->getSelectedUnit();
         if (!target)
@@ -1362,16 +1373,24 @@ public:
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
             return false;
 
-        if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-            {
-                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                return true;
-            }
-        }
+		if (target->GetTypeId() == TYPEID_PLAYER)
+		{
+			if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+			{
+				handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+				return true;
+			}
+		}
 
-        handler->PSendSysMessage("Set target's displayId to %u", display_id);
+		else
+		{
+			if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
+			{
+				handler->SendSysMessage("Morphing NPCs is prohibited in this zone.");
+				return true;
+			}
+		}
+
         target->SetDisplayId(display_id);
 
         return true;
@@ -1389,14 +1408,14 @@ public:
         if (!target)
             target = handler->GetSession()->GetPlayer();
 
-        if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-            {
-                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                return true;
-            }
-        }
+		if (target->GetTypeId() == TYPEID_PLAYER)
+		{
+			if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+			{
+				handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+				return true;
+			}
+		}
 
         // check online security
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
@@ -1432,12 +1451,6 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
-
         int32 amount = (uint32)atoi(args);
 
         target->ModifyArenaPoints(amount);
@@ -1461,11 +1474,11 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         PlayerInfo const* info = sObjectMgr->GetPlayerInfo(target->getRace(), target->getClass());
         if (!info)
@@ -1509,7 +1522,7 @@ public:
         handler->PSendSysMessage(LANG_YOU_CHANGE_GENDER, handler->GetNameLink(target).c_str(), gender_full);
 
         if (handler->needReportToTarget(target))
-            (ChatHandler(target)).PSendSysMessage(LANG_YOUR_GENDER_CHANGED, gender_full, handler->GetNameLink().c_str());
+            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOUR_GENDER_CHANGED, gender_full, handler->GetNameLink().c_str());
 
         return true;
     }
@@ -1520,324 +1533,97 @@ public:
         if (!target)
             target = handler->GetSession()->GetPlayer();
 
-		// check online security
+        // check online security
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
             return false;
 
-        if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-            {
-                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                return true;
-            }
-        }
+		if (target->GetTypeId() == TYPEID_PLAYER)
+		{
+			if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+			{
+				handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+				return true;
+			}
+		}
 
         target->DeMorph();
 
         return true;
     }
+//change character level
+	static void HandleCharacterLevel(Player* player, uint64 playerGuid, uint32 oldLevel, uint32 newLevel, ChatHandler* handler)
+	{
+		if (player)
+		{
+			player->GiveLevel(newLevel);
+			player->InitTalentForLevel();
+			player->SetUInt32Value(PLAYER_XP, 0);
 
-    static bool HandleMountCommand(ChatHandler* handler, const char* args)
-    {
-	    if (!*args)
-	    {
-		    handler->SendSysMessage("No model specified");
-		    return true;
-	    }
+			if (handler->needReportToTarget(player))
+			{
+				if (oldLevel == newLevel)
+					ChatHandler(player->GetSession()).PSendSysMessage(LANG_YOURS_LEVEL_PROGRESS_RESET, handler->GetNameLink().c_str());
+				else if (oldLevel < newLevel)
+					ChatHandler(player->GetSession()).PSendSysMessage(LANG_YOURS_LEVEL_UP, handler->GetNameLink().c_str(), newLevel);
+				else                                                // if (oldlevel > newlevel)
+					ChatHandler(player->GetSession()).PSendSysMessage(LANG_YOURS_LEVEL_DOWN, handler->GetNameLink().c_str(), newLevel);
+			}
+		}
+		else
+		{
+			// Update level and reset XP, everything else will be updated at login
+			PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_LEVEL);
+			stmt->setUInt8(0, uint8(newLevel));
+			stmt->setUInt32(1, GUID_LOPART(playerGuid));
+			CharacterDatabase.Execute(stmt);
+		}
+	}
+	static bool HandleCharacterLevelCommand(ChatHandler* handler, char const* args)
+	{
+		char* nameStr;
+		char* levelStr;
+		handler->extractOptFirstArg((char*)args, &nameStr, &levelStr);
+		if (!levelStr)
+			return false;
 
-	    uint32 modelid = atol(args);	
-	    Unit* target = handler->getSelectedUnit();
-			
-	    if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_DISPLAYID, modelid))
-        {
-    	    handler->SendSysMessage("You can't use this mount!");
-    	    return true;
-        }
+		// exception opt second arg: .character level $name
+		if (isalpha(levelStr[0]))
+		{
+			nameStr = levelStr;
+			levelStr = NULL;                                    // current level will used
+		}
 
-	    if (!target)
-	    {
-		    handler->SendSysMessage("No target specified");
-		    return true;
-	    }
+		Player* target;
+		uint64 targetGuid;
+		std::string targetName;
+		if (!handler->extractPlayerTarget(nameStr, &target, &targetGuid, &targetName))
+			return false;
 
-        if (target->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (!target->ToPlayer()->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-            {
-                handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-                return true;
-            }
-        }
-		
-	    if (target->IsMounted())
-	    {
-		    handler->SendSysMessage("Target is mounted");
-		    return true;
-	    }
-		
-	    target->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, modelid);
-        handler->PSendSysMessage("Mounted target with displayId: %u", modelid);
-        return true;
-    }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", targetName.c_str());
+			return true;
+		}
 
-    static bool HandleModifyAnnounceColorCommand(ChatHandler* handler, const char* args)
-    {
-        if (!*args)
-            return false; // "No color specified, for a list of colors type .color"
+		int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(targetGuid);
+		int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
 
-	    std::string colorName;
-        std::string colorstr = strtok((char*)args, " "); //Args to be converted to uint32
-        uint32 color = atoi(colorstr.c_str()); //Args converted to uint32
-	    Player* player = handler->GetSession()->GetPlayer();
+		if (newlevel < 1)
+			return false;                                       // invalid level
 
-        switch (color)
-        {
-            case 1:
-                player->SetAnnounceColor("|cffff6060");
-                colorName = "LightRed";
-                break;
-            case 2:
-                player->SetAnnounceColor("|cff00ccff");
-                colorName = "LightBlue";
-                break;
-            case 3:
-                player->SetAnnounceColor("|cff00C78C");
-                colorName = "TurquiseBlue";
-                break;
-            case 4:
-                player->SetAnnounceColor("|cff00FF7F");
-                colorName = "SpringGreen";
-                break;
-            case 5:
-                player->SetAnnounceColor("|cffADFF2F");
-                colorName = "GreenYellow";
-                break;
-            case 6:
-                player->SetAnnounceColor("|cffDA70D6");
-                colorName = "Purple";
-                break;
-            case 7:
-                player->SetAnnounceColor("|cff00ff00");
-                colorName = "Green";
-                break;
-            case 8:
-                player->SetAnnounceColor("|cffff0000");
-                colorName = "Red";
-                break;
-            case 9:
-                player->SetAnnounceColor("|cffffcc00");
-                colorName = "Gold";
-                break;
-            case 10:
-                player->SetAnnounceColor("|cffFFC125");
-                colorName = "Gold2";
-                break;
-            case 11:
-                player->SetAnnounceColor("|cff888888");
-                colorName = "Grey";
-                break;
-            case 12:
-                player->SetAnnounceColor("|cffffffff");
-                colorName = "White";
-                break;
-            case 13:
-                player->SetAnnounceColor("|cffbbbbbb");
-                colorName = "Subwhite";
-                break;
-            case 14:
-                player->SetAnnounceColor("|cffff00ff");
-                colorName = "Magenta";
-                break;
-            case 15:
-                player->SetAnnounceColor("|cffffff00");
-                colorName = "Yellow";
-                break;
-            case 16:
-                player->SetAnnounceColor("|cffFF4500");
-                colorName = "Orangey";
-                break;
-            case 17:
-                player->SetAnnounceColor("|cffCD661D");
-                colorName = "Chocolate";
-                break;
-            case 18:
-                player->SetAnnounceColor("|cff00ffff");
-                colorName = "Cyan";
-                break;
-            case 19:
-                player->SetAnnounceColor("|cffFFFFE0");
-                colorName = "LightYellow";
-                break;
-            case 20:
-                player->SetAnnounceColor("|cff71C671");
-                colorName = "SexyGreen";
-                break;
-            case 21:
-                player->SetAnnounceColor("|cff388E8E");
-                colorName = "SexyTeal";
-                break;
-            case 22:
-                player->SetAnnounceColor("|cffC67171");
-                colorName = "SexyPink";
-                break;
-            case 23:
-                player->SetAnnounceColor("|cff00E5EE");
-                colorName = "SexyBlue";
-                break;
-            case 24:
-                player->SetAnnounceColor("|cffFF6EB4");
-                colorName = "SexyHotPink";
-                break;
-            default:
-                return false;
-                break;
-        }
+		if (newlevel > STRONG_MAX_LEVEL)                         // hardcoded maximum level
+			newlevel = STRONG_MAX_LEVEL;
 
-        handler->PSendSysMessage("Chatcolor successfully set to %s.", colorName.c_str());
-        return true;
-    }
+		HandleCharacterLevel(target, targetGuid, oldlevel, newlevel, handler);
+		if (!handler->GetSession() || handler->GetSession()->GetPlayer() != target)      // including player == NULL
+		{
+			std::string nameLink = handler->playerLink(targetName);
+			handler->PSendSysMessage(LANG_YOU_CHANGE_LVL, nameLink.c_str(), newlevel);
+		}
 
-    static bool HandleModifyNudgeDistanceCommand(ChatHandler* handler, const char* args)
-    {
-	    Player* player = handler->GetSession()->GetPlayer();
+		return true;
+	}
 
-        if (!*args)
-        {
-            handler->PSendSysMessage("Your current nudge distance is %u feet.", player->GetNudgeDistance());
-		    return true;
-        }
-
-        int newDistance = atoi(args);
-        player->SetNudgeDistance(newDistance);
-
-        if (newDistance <= -50 || newDistance >= 50)
-        {
-            handler->SendSysMessage("Nudge distance is too large. Choose something between 50 and -50.");
-            return true;
-        }
-		
-        handler->PSendSysMessage("Nudge distance set to %u feet.", newDistance);
-        return true;
-    }
-
-    static void HandleCharacterLevel(Player* player, uint64 playerGuid, uint32 oldLevel, uint32 newLevel, ChatHandler* handler)
-    {
-        if (player)
-        {
-            player->GiveLevel(newLevel);
-            player->InitTalentForLevel();
-            player->SetUInt32Value(PLAYER_XP, 0);
-
-            if (handler->needReportToTarget(player))
-            {
-                if (oldLevel == newLevel)
-                    handler->PSendSysMessage(LANG_YOURS_LEVEL_PROGRESS_RESET, handler->GetNameLink().c_str());
-                else if (oldLevel < newLevel)
-                    handler->PSendSysMessage(LANG_YOURS_LEVEL_UP, handler->GetNameLink().c_str(), newLevel);
-                else                                                // if (oldlevel > newlevel)
-                    handler->PSendSysMessage(LANG_YOURS_LEVEL_DOWN, handler->GetNameLink().c_str(), newLevel);
-            }
-        }
-        else
-        {
-            // Update level and reset XP, everything else will be updated at login
-            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_LEVEL);
-
-            stmt->setUInt8(0, uint8(newLevel));
-            stmt->setUInt32(1, GUID_LOPART(playerGuid));
-
-            CharacterDatabase.Execute(stmt);
-        }
-    }
-
-    static bool HandleModifyLevelCommand(ChatHandler* handler, const char *args)
-    {
-        char* nameStr;
-        char* levelStr;
-        handler->extractOptFirstArg((char*)args, &nameStr, &levelStr);
-        if (!levelStr)
-            return false;
-
-        // exception opt second arg: .character level $name
-        if (isalpha(levelStr[0]))
-        {
-            nameStr = levelStr;
-            levelStr = NULL;                                    // current level will used
-        }
-
-        Player* target;
-        uint64 target_guid;
-        std::string target_name;
-        if (!handler->extractPlayerTarget(nameStr, &target, &target_guid, &target_name))
-            return false;
-
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
-
-        int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
-        int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
-
-        if (newlevel < 1)
-            return false;                                       // invalid level
-
-        if (newlevel > STRONG_MAX_LEVEL)                         // hardcoded maximum level
-            newlevel = STRONG_MAX_LEVEL;
-
-        HandleCharacterLevel(target, target_guid, oldlevel, newlevel, handler);
-
-        if (!handler->GetSession() || handler->GetSession()->GetPlayer() != target)      // including player == NULL
-        {
-            std::string nameLink = handler->playerLink(target_name);
-            handler->PSendSysMessage(LANG_YOU_CHANGE_LVL, nameLink.c_str(), newlevel);
-        }
-
-        return true;
-    }
-
-    static bool HandleChangeWeather(ChatHandler* handler, const char *args)
-    {
-        if (!*args)
-            return false;
-
-        //Weather is OFF
-        if (!sWorld->getBoolConfig(CONFIG_WEATHER))
-        {
-            handler->SendSysMessage(LANG_WEATHER_DISABLED);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        // *Change the weather of a cell
-        char* px = strtok((char*)args, " ");
-        char* py = strtok(NULL, " ");
-
-        if (!px || !py)
-            return false;
-
-        uint32 type = (uint32)atoi(px);                         //0 to 3, 0: fine, 1: rain, 2: snow, 3: sand
-        float grade = (float)atof(py);                          //0 to 1, sending -1 is instand good weather
-
-        Player* player = handler->GetSession()->GetPlayer();
-        uint32 zoneid = player->GetZoneId();
-
-        Weather* wth = WeatherMgr::FindWeather(zoneid);
-
-        if (!wth)
-            wth = WeatherMgr::AddWeather(zoneid);
-        if (!wth)
-        {
-            handler->SendSysMessage(LANG_NO_WEATHER);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        wth->SetWeather(WeatherType(type), grade);
-        return true;
-    }
 
 };
 

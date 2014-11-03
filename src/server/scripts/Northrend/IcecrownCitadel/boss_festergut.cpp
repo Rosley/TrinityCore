@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +20,7 @@
 #include "ScriptedCreature.h"
 #include "SpellAuras.h"
 #include "icecrown_citadel.h"
+#include "Player.h"
 
 enum ScriptTexts
 {
@@ -71,7 +72,10 @@ enum Events
     EVENT_MORTAL_WOUND  = 7,
 };
 
-#define DATA_INOCULATED_STACK 69291
+enum Misc
+{
+    DATA_INOCULATED_STACK       = 69291
+};
 
 class boss_festergut : public CreatureScript
 {
@@ -87,7 +91,7 @@ class boss_festergut : public CreatureScript
                 _gasDummyGUID = 0;
             }
 
-            void Reset()
+            void Reset() override
             {
                 _Reset();
                 me->SetReactState(REACT_DEFENSIVE);
@@ -109,7 +113,7 @@ class boss_festergut : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit* who)
+            void EnterCombat(Unit* who) override
             {
                 if (!instance->CheckRequiredBosses(DATA_FESTERGUT, who->ToPlayer()))
                 {
@@ -127,7 +131,7 @@ class boss_festergut : public CreatureScript
                 DoZoneInCombat();
             }
 
-            void JustDied(Unit* /*killer*/)
+            void JustDied(Unit* /*killer*/) override
             {
                 _JustDied();
                 Talk(SAY_DEATH);
@@ -137,32 +141,32 @@ class boss_festergut : public CreatureScript
                 RemoveBlight();
             }
 
-            void JustReachedHome()
+            void JustReachedHome() override
             {
                 _JustReachedHome();
                 instance->SetBossState(DATA_FESTERGUT, FAIL);
             }
 
-            void EnterEvadeMode()
+            void EnterEvadeMode() override
             {
                 ScriptedAI::EnterEvadeMode();
                 if (Creature* professor = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_PROFESSOR_PUTRICIDE)))
                     professor->AI()->EnterEvadeMode();
             }
 
-            void KilledUnit(Unit* victim)
+            void KilledUnit(Unit* victim) override
             {
                 if (victim->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_KILL);
             }
 
-            void SpellHitTarget(Unit* target, SpellInfo const* spell)
+            void SpellHitTarget(Unit* target, SpellInfo const* spell) override
             {
                 if (spell->Id == PUNGENT_BLIGHT_HELPER)
                     target->RemoveAurasDueToSpell(INOCULATED_HELPER);
             }
 
-            void UpdateAI(uint32 const diff)
+            void UpdateAI(uint32 diff) override
             {
                 if (!UpdateVictim() || !CheckInRoom())
                     return;
@@ -203,15 +207,27 @@ class boss_festergut : public CreatureScript
                         }
                         case EVENT_VILE_GAS:
                         {
-                            std::list<Unit*> targets;
+                            std::list<Unit*> ranged, melee;
                             uint32 minTargets = RAID_MODE<uint32>(3, 8, 3, 8);
-                            SelectTargetList(targets, minTargets, SELECT_TARGET_RANDOM, -5.0f, true);
-                            float minDist = 0.0f;
-                            if (targets.size() >= minTargets)
-                                minDist = -5.0f;
+                            SelectTargetList(ranged, 25, SELECT_TARGET_RANDOM, -5.0f, true);
+                            SelectTargetList(melee, 25, SELECT_TARGET_RANDOM, 5.0f, true);
+                            while (ranged.size() < minTargets)
+                            {
+                                if (melee.empty())
+                                    break;
 
-                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, minDist, true))
-                                DoCast(target, SPELL_VILE_GAS);
+                                Unit* target = Trinity::Containers::SelectRandomContainerElement(melee);
+                                ranged.push_back(target);
+                                melee.remove(target);
+                            }
+
+                            if (!ranged.empty())
+                            {
+                                Trinity::Containers::RandomResizeList(ranged, RAID_MODE<uint32>(1, 3, 1, 3));
+                                for (std::list<Unit*>::iterator itr = ranged.begin(); itr != ranged.end(); ++itr)
+                                    DoCast(*itr, SPELL_VILE_GAS);
+                            }
+
                             events.ScheduleEvent(EVENT_VILE_GAS, urand(28000, 35000));
                             break;
                         }
@@ -238,13 +254,13 @@ class boss_festergut : public CreatureScript
                 DoMeleeAttackIfReady();
             }
 
-            void SetData(uint32 type, uint32 data)
+            void SetData(uint32 type, uint32 data) override
             {
                 if (type == DATA_INOCULATED_STACK && data > _maxInoculatedStack)
                     _maxInoculatedStack = data;
             }
 
-            uint32 GetData(uint32 type)
+            uint32 GetData(uint32 type) const override
             {
                 if (type == DATA_INOCULATED_STACK)
                     return uint32(_maxInoculatedStack);
@@ -268,7 +284,7 @@ class boss_festergut : public CreatureScript
             uint32 _inhaleCounter;
         };
 
-        CreatureAI* GetAI(Creature* creature) const
+        CreatureAI* GetAI(Creature* creature) const override
         {
             return GetIcecrownCitadelAI<boss_festergutAI>(creature);
         }
@@ -286,19 +302,19 @@ class npc_stinky_icc : public CreatureScript
                 _instance = creature->GetInstanceScript();
             }
 
-            void Reset()
+            void Reset() override
             {
                 _events.Reset();
                 _events.ScheduleEvent(EVENT_DECIMATE, urand(20000, 25000));
                 _events.ScheduleEvent(EVENT_MORTAL_WOUND, urand(3000, 7000));
             }
 
-            void EnterCombat(Unit* /*target*/)
+            void EnterCombat(Unit* /*target*/) override
             {
                 DoCast(me, SPELL_PLAGUE_STENCH);
             }
 
-            void UpdateAI(uint32 const diff)
+            void UpdateAI(uint32 diff) override
             {
                 if (!UpdateVictim())
                     return;
@@ -328,10 +344,10 @@ class npc_stinky_icc : public CreatureScript
                 DoMeleeAttackIfReady();
             }
 
-            void JustDied(Unit* /*killer*/)
+            void JustDied(Unit* /*killer*/) override
             {
-                if (Creature* festergut = me->GetCreature(*me, _instance->GetData64(DATA_FESTERGUT)))
-                    if (festergut->isAlive())
+                if (Creature* festergut = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_FESTERGUT)))
+                    if (festergut->IsAlive())
                         festergut->AI()->Talk(SAY_STINKY_DEAD);
             }
 
@@ -340,7 +356,7 @@ class npc_stinky_icc : public CreatureScript
             InstanceScript* _instance;
         };
 
-        CreatureAI* GetAI(Creature* creature) const
+        CreatureAI* GetAI(Creature* creature) const override
         {
             return GetIcecrownCitadelAI<npc_stinky_iccAI>(creature);
         }
@@ -355,7 +371,7 @@ class spell_festergut_pungent_blight : public SpellScriptLoader
         {
             PrepareSpellScript(spell_festergut_pungent_blight_SpellScript);
 
-            bool Load()
+            bool Load() override
             {
                 return GetCaster()->GetTypeId() == TYPEID_UNIT;
             }
@@ -370,13 +386,13 @@ class spell_festergut_pungent_blight : public SpellScriptLoader
                 GetCaster()->ToCreature()->AI()->Talk(EMOTE_PUNGENT_BLIGHT);
             }
 
-            void Register()
+            void Register() override
             {
                 OnEffectHitTarget += SpellEffectFn(spell_festergut_pungent_blight_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
-        SpellScript* GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_festergut_pungent_blight_SpellScript();
         }
@@ -391,7 +407,7 @@ class spell_festergut_gastric_bloat : public SpellScriptLoader
         {
             PrepareSpellScript(spell_festergut_gastric_bloat_SpellScript);
 
-            bool Validate(SpellInfo const* /*spell*/)
+            bool Validate(SpellInfo const* /*spell*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_GASTRIC_EXPLOSION))
                     return false;
@@ -408,13 +424,13 @@ class spell_festergut_gastric_bloat : public SpellScriptLoader
                 GetHitUnit()->CastSpell(GetHitUnit(), SPELL_GASTRIC_EXPLOSION, true);
             }
 
-            void Register()
+            void Register() override
             {
                 OnEffectHitTarget += SpellEffectFn(spell_festergut_gastric_bloat_SpellScript::HandleScript, EFFECT_2, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
-        SpellScript* GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_festergut_gastric_bloat_SpellScript();
         }
@@ -429,7 +445,7 @@ class spell_festergut_blighted_spores : public SpellScriptLoader
         {
             PrepareAuraScript(spell_festergut_blighted_spores_AuraScript);
 
-            bool Validate(SpellInfo const* /*spell*/)
+            bool Validate(SpellInfo const* /*spell*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_INOCULATED))
                     return false;
@@ -442,15 +458,43 @@ class spell_festergut_blighted_spores : public SpellScriptLoader
                 if (InstanceScript* instance = GetTarget()->GetInstanceScript())
                     if (Creature* festergut = ObjectAccessor::GetCreature(*GetTarget(), instance->GetData64(DATA_FESTERGUT)))
                         festergut->AI()->SetData(DATA_INOCULATED_STACK, GetStackAmount());
+
+                HandleResidue();
             }
 
-            void Register()
+            void HandleResidue()
             {
-                AfterEffectApply += AuraEffectApplyFn(spell_festergut_blighted_spores_AuraScript::ExtraEffect, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+                Player* target = GetUnitOwner()->ToPlayer();
+                if (!target)
+                    return;
+
+                if (target->HasAura(SPELL_ORANGE_BLIGHT_RESIDUE))
+                    return;
+
+                if (target->GetMap() && !target->GetMap()->Is25ManRaid())
+                {
+                    if (target->GetQuestStatus(QUEST_RESIDUE_RENDEZVOUS_10) != QUEST_STATUS_INCOMPLETE)
+                        return;
+
+                    target->CastSpell(target, SPELL_ORANGE_BLIGHT_RESIDUE, TRIGGERED_FULL_MASK);
+                }
+
+                if (target->GetMap() && target->GetMap()->Is25ManRaid())
+                {
+                    if (target->GetQuestStatus(QUEST_RESIDUE_RENDEZVOUS_25) != QUEST_STATUS_INCOMPLETE)
+                        return;
+
+                    target->CastSpell(target, SPELL_ORANGE_BLIGHT_RESIDUE, TRIGGERED_FULL_MASK);
+                }
+            }
+
+            void Register() override
+            {
+                OnEffectRemove += AuraEffectApplyFn(spell_festergut_blighted_spores_AuraScript::ExtraEffect, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
             }
         };
 
-        AuraScript* GetAuraScript() const
+        AuraScript* GetAuraScript() const override
         {
             return new spell_festergut_blighted_spores_AuraScript();
         }
@@ -461,7 +505,7 @@ class achievement_flu_shot_shortage : public AchievementCriteriaScript
     public:
         achievement_flu_shot_shortage() : AchievementCriteriaScript("achievement_flu_shot_shortage") { }
 
-        bool OnCheck(Player* /*source*/, Unit* target)
+        bool OnCheck(Player* /*source*/, Unit* target) override
         {
             if (target && target->GetTypeId() == TYPEID_UNIT)
                 return target->ToCreature()->AI()->GetData(DATA_INOCULATED_STACK) < 3;

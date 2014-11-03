@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,10 +21,13 @@
 
 #include "Common.h"
 #include "SharedDefines.h"
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
 
 class Player;
 class Group;
+
+namespace lfg
+{
 
 class LFGPlayerScript : public PlayerScript
 {
@@ -32,10 +35,9 @@ class LFGPlayerScript : public PlayerScript
         LFGPlayerScript();
 
         // Player Hooks
-        void OnLevelChanged(Player* player, uint8 oldLevel);
-        void OnLogout(Player* player);
-        void OnLogin(Player* player);
-        void OnBindToInstance(Player* player, Difficulty difficulty, uint32 mapId, bool permanent);
+        void OnLogout(Player* player) override;
+        void OnLogin(Player* player, bool loginFirst) override;
+        void OnMapChanged(Player* player) override;
 };
 
 class LFGGroupScript : public GroupScript
@@ -44,9 +46,11 @@ class LFGGroupScript : public GroupScript
         LFGGroupScript();
 
         // Group Hooks
-        void OnAddMember(Group* group, uint64 guid);
-        void OnRemoveMember(Group* group, uint64 guid, RemoveMethod method, uint64 kicker, char const* reason);
-        void OnDisband(Group* group);
-        void OnChangeLeader(Group* group, uint64 newLeaderGuid, uint64 oldLeaderGuid);
-        void OnInviteMember(Group* group, uint64 guid);
+        void OnAddMember(Group* group, uint64 guid) override;
+        void OnRemoveMember(Group* group, uint64 guid, RemoveMethod method, uint64 kicker, char const* reason) override;
+        void OnDisband(Group* group) override;
+        void OnChangeLeader(Group* group, uint64 newLeaderGuid, uint64 oldLeaderGuid) override;
+        void OnInviteMember(Group* group, uint64 guid) override;
 };
+
+} // namespace lfg

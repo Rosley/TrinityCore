@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,10 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "InstanceScript.h"
 #include "pit_of_saron.h"
+#include "Player.h"
 
 // positions for Martin Victus (37591) and Gorkun Ironskull (37592)
 Position const SlaveLeaderPos  = {689.7158f, -104.8736f, 513.7360f, 0.0f};
@@ -39,7 +41,7 @@ class instance_pit_of_saron : public InstanceMapScript
         {
             instance_pit_of_saron_InstanceScript(Map* map) : InstanceScript(map)
             {
-                SetBossNumber(MAX_ENCOUNTER);
+                SetBossNumber(EncounterCount);
                 LoadDoorData(Doors);
                 _garfrostGUID = 0;
                 _krickGUID = 0;
@@ -51,19 +53,19 @@ class instance_pit_of_saron : public InstanceMapScript
                 _teamInInstance = 0;
             }
 
-            void OnPlayerEnter(Player* player)
+            void OnPlayerEnter(Player* player) override
             {
                 if (!_teamInInstance)
                     _teamInInstance = player->GetTeam();
             }
 
-            void OnCreatureCreate(Creature* creature)
+            void OnCreatureCreate(Creature* creature) override
             {
                 if (!_teamInInstance)
                 {
-                    Map::PlayerList const &players = instance->GetPlayers();
+                    Map::PlayerList const& players = instance->GetPlayers();
                     if (!players.isEmpty())
-                        if (Player* player = players.begin()->getSource())
+                        if (Player* player = players.begin()->GetSource())
                             _teamInInstance = player->GetTeam();
                 }
 
@@ -89,80 +91,80 @@ class instance_pit_of_saron : public InstanceMapScript
                         break;
                     case NPC_SYLVANAS_PART1:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_JAINA_PART1, ALLIANCE);
+                            creature->UpdateEntry(NPC_JAINA_PART1);
                         _jainaOrSylvanas1GUID = creature->GetGUID();
                         break;
                     case NPC_SYLVANAS_PART2:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_JAINA_PART2, ALLIANCE);
+                            creature->UpdateEntry(NPC_JAINA_PART2);
                         _jainaOrSylvanas2GUID = creature->GetGUID();
                         break;
                     case NPC_KILARA:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_ELANDRA, ALLIANCE);
+                           creature->UpdateEntry(NPC_ELANDRA);
                         break;
                     case NPC_KORALEN:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_KORLAEN, ALLIANCE);
+                           creature->UpdateEntry(NPC_KORLAEN);
                         break;
                     case NPC_CHAMPION_1_HORDE:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_CHAMPION_1_ALLIANCE, ALLIANCE);
+                           creature->UpdateEntry(NPC_CHAMPION_1_ALLIANCE);
                         break;
                     case NPC_CHAMPION_2_HORDE:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_CHAMPION_2_ALLIANCE, ALLIANCE);
+                           creature->UpdateEntry(NPC_CHAMPION_2_ALLIANCE);
                         break;
                     case NPC_CHAMPION_3_HORDE: // No 3rd set for Alliance?
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_CHAMPION_2_ALLIANCE, ALLIANCE);
+                           creature->UpdateEntry(NPC_CHAMPION_2_ALLIANCE);
                         break;
                     case NPC_HORDE_SLAVE_1:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_1, ALLIANCE);
+                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_1);
                         break;
                     case NPC_HORDE_SLAVE_2:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_2, ALLIANCE);
+                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_2);
                         break;
                     case NPC_HORDE_SLAVE_3:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_3, ALLIANCE);
+                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_3);
                         break;
                     case NPC_HORDE_SLAVE_4:
                         if (_teamInInstance == ALLIANCE)
-                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_4, ALLIANCE);
+                           creature->UpdateEntry(NPC_ALLIANCE_SLAVE_4);
                         break;
                     case NPC_FREED_SLAVE_1_HORDE:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_FREED_SLAVE_1_ALLIANCE, ALLIANCE);
+                            creature->UpdateEntry(NPC_FREED_SLAVE_1_ALLIANCE);
                         break;
                     case NPC_FREED_SLAVE_2_HORDE:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_FREED_SLAVE_2_ALLIANCE, ALLIANCE);
+                            creature->UpdateEntry(NPC_FREED_SLAVE_2_ALLIANCE);
                         break;
                     case NPC_FREED_SLAVE_3_HORDE:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_FREED_SLAVE_3_ALLIANCE, ALLIANCE);
+                            creature->UpdateEntry(NPC_FREED_SLAVE_3_ALLIANCE);
                         break;
                     case NPC_RESCUED_SLAVE_HORDE:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_RESCUED_SLAVE_ALLIANCE, ALLIANCE);
+                            creature->UpdateEntry(NPC_RESCUED_SLAVE_ALLIANCE);
                         break;
                     case NPC_MARTIN_VICTUS_1:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_MARTIN_VICTUS_1, ALLIANCE);
+                            creature->UpdateEntry(NPC_MARTIN_VICTUS_1);
                         break;
                     case NPC_MARTIN_VICTUS_2:
                         if (_teamInInstance == ALLIANCE)
-                            creature->UpdateEntry(NPC_MARTIN_VICTUS_2, ALLIANCE);
+                            creature->UpdateEntry(NPC_MARTIN_VICTUS_2);
                         break;
                     default:
                         break;
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go)
+            void OnGameObjectCreate(GameObject* go) override
             {
                 switch (go->GetEntry())
                 {
@@ -173,7 +175,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectRemove(GameObject* go)
+            void OnGameObjectRemove(GameObject* go) override
             {
                 switch (go->GetEntry())
                 {
@@ -184,7 +186,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 }
             }
 
-            bool SetBossState(uint32 type, EncounterState state)
+            bool SetBossState(uint32 type, EncounterState state) override
             {
                 if (!InstanceScript::SetBossState(type, state))
                     return false;
@@ -222,7 +224,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return true;
             }
 
-            uint32 GetData(uint32 type)
+            uint32 GetData(uint32 type) const override
             {
                 switch (type)
                 {
@@ -235,7 +237,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 type)
+            uint64 GetData64(uint32 type) const override
             {
                 switch (type)
                 {
@@ -262,7 +264,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return 0;
             }
 
-            std::string GetSaveData()
+            std::string GetSaveData() override
             {
                 OUT_SAVE_INST_DATA;
 
@@ -273,7 +275,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(const char* in)
+            void Load(const char* in) override
             {
                 if (!in)
                 {
@@ -290,7 +292,7 @@ class instance_pit_of_saron : public InstanceMapScript
 
                 if (dataHead1 == 'P' && dataHead2 == 'S')
                 {
-                    for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
+                    for (uint8 i = 0; i < EncounterCount; ++i)
                     {
                         uint32 tmpState;
                         loadStream >> tmpState;
@@ -320,7 +322,7 @@ class instance_pit_of_saron : public InstanceMapScript
             uint32 _teamInInstance;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const
+        InstanceScript* GetInstanceScript(InstanceMap* map) const override
         {
             return new instance_pit_of_saron_InstanceScript(map);
         }

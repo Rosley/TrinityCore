@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -23,7 +23,9 @@ SDComment:
 SDCategory: Maraudon
 EndScriptData */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "ScriptedCreature.h"
 
 enum Spells
 {
@@ -38,74 +40,72 @@ class boss_princess_theradras : public CreatureScript
 public:
     boss_princess_theradras() : CreatureScript("boss_princess_theradras") { }
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
-        return new boss_ptheradrasAI (creature);
+        return new boss_ptheradrasAI(creature);
     }
 
     struct boss_ptheradrasAI : public ScriptedAI
     {
-        boss_ptheradrasAI(Creature* creature) : ScriptedAI(creature) {}
+        boss_ptheradrasAI(Creature* creature) : ScriptedAI(creature) { }
 
-        uint32 Dustfield_Timer;
-        uint32 Boulder_Timer;
-        uint32 Thrash_Timer;
-        uint32 RepulsiveGaze_Timer;
+        uint32 DustfieldTimer;
+        uint32 BoulderTimer;
+        uint32 ThrashTimer;
+        uint32 RepulsiveGazeTimer;
 
-        void Reset()
+        void Reset() override
         {
-            Dustfield_Timer = 8000;
-            Boulder_Timer = 2000;
-            Thrash_Timer = 5000;
-            RepulsiveGaze_Timer = 23000;
+            DustfieldTimer = 8000;
+            BoulderTimer = 2000;
+            ThrashTimer = 5000;
+            RepulsiveGazeTimer = 23000;
         }
 
-        void EnterCombat(Unit* /*who*/) {}
+        void EnterCombat(Unit* /*who*/) override { }
 
-        void JustDied(Unit* /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             me->SummonCreature(12238, 28.067f, 61.875f, -123.405f, 4.67f, TEMPSUMMON_TIMED_DESPAWN, 600000);
         }
 
-        void UpdateAI(const uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
 
-            //Dustfield_Timer
-            if (Dustfield_Timer <= diff)
+            //DustfieldTimer
+            if (DustfieldTimer <= diff)
             {
                 DoCast(me, SPELL_DUSTFIELD);
-                Dustfield_Timer = 14000;
+                DustfieldTimer = 14000;
             }
-            else Dustfield_Timer -= diff;
+            else DustfieldTimer -= diff;
 
-            //Boulder_Timer
-            if (Boulder_Timer <= diff)
+            //BoulderTimer
+            if (BoulderTimer <= diff)
             {
-                Unit* target = NULL;
-                target = SelectTarget(SELECT_TARGET_RANDOM, 0);
-                if (target)
+                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                     DoCast(target, SPELL_BOULDER);
-                Boulder_Timer = 10000;
+                BoulderTimer = 10000;
             }
-            else Boulder_Timer -= diff;
+            else BoulderTimer -= diff;
 
-            //RepulsiveGaze_Timer
-            if (RepulsiveGaze_Timer <= diff)
+            //RepulsiveGazeTimer
+            if (RepulsiveGazeTimer <= diff)
             {
-                DoCast(me->getVictim(), SPELL_REPULSIVEGAZE);
-                RepulsiveGaze_Timer = 20000;
+                DoCastVictim(SPELL_REPULSIVEGAZE);
+                RepulsiveGazeTimer = 20000;
             }
-            else RepulsiveGaze_Timer -= diff;
+            else RepulsiveGazeTimer -= diff;
 
-            //Thrash_Timer
-            if (Thrash_Timer <= diff)
+            //ThrashTimer
+            if (ThrashTimer <= diff)
             {
                 DoCast(me, SPELL_THRASH);
-                Thrash_Timer = 18000;
+                ThrashTimer = 18000;
             }
-            else Thrash_Timer -= diff;
+            else ThrashTimer -= diff;
 
             DoMeleeAttackIfReady();
         }

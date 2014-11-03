@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -24,12 +24,6 @@
 #define _OPCODES_H
 
 #include "Common.h"
-
-// Note: this include need for be sure have full definition of class WorldSession
-//       if this class definition not complete then VS for x64 release use different size for
-//       struct OpcodeHandler in this header and Opcode.cpp and get totally wrong data from
-//       table opcodeTable in source when Opcode.h included but WorldSession.h not included
-#include "WorldSession.h"
 
 /// List of Opcodes
 enum Opcodes
@@ -1257,7 +1251,7 @@ enum Opcodes
     CMSG_GM_GRANT_ACHIEVEMENT                       = 0x4C4,
     CMSG_GM_REMOVE_ACHIEVEMENT                      = 0x4C5,
     CMSG_GM_SET_CRITERIA_FOR_PLAYER                 = 0x4C6,
-    SMSG_ARENA_OPPONENT_UPDATE                      = 0x4C7, // uint64
+    SMSG_ARENA_UNIT_DESTROYED                       = 0x4C7,
     SMSG_ARENA_TEAM_CHANGE_FAILED_QUEUED            = 0x4C8, // uint32 "Can't modify arena team while queued or in a match."
     CMSG_PROFILEDATA_REQUEST                        = 0x4C9,
     SMSG_PROFILEDATA_RESPONSE                       = 0x4CA,
@@ -1325,7 +1319,7 @@ enum Opcodes
     CMSG_SET_ALLOW_LOW_LEVEL_RAID1                  = 0x508,
     CMSG_SET_ALLOW_LOW_LEVEL_RAID2                  = 0x509,
     SMSG_CAMERA_SHAKE                               = 0x50A, // uint32 SpellEffectCameraShakes.dbc index, uint32
-    SMSG_UPDATE_ITEM_ENCHANTMENTS                   = 0x50B, // some item update packet?
+    SMSG_SOCKET_GEMS_RESULT                         = 0x50B,
     CMSG_SET_CHARACTER_MODEL                        = 0x50C,
     SMSG_REDIRECT_CLIENT                            = 0x50D, // uint32 ip, uint16 port, uint32 unk, uint8[20] hash (ip + port, seed=sessionkey)
     CMSG_REDIRECTION_FAILED                         = 0x50E, // something with networking
@@ -1356,7 +1350,7 @@ enum SessionStatus
     STATUS_TRANSFER,                                        // Player transferring to another map (_player != NULL, m_GUID == _player->GetGUID(), !inWorld())
     STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT,                    // _player != NULL or _player == NULL && m_playerRecentlyLogout && m_playerLogout, m_GUID store last _player guid)
     STATUS_NEVER,                                           // Opcode not accepted from client (deprecated or server side only)
-    STATUS_UNHANDLED,                                       // Opcode not handled yet
+    STATUS_UNHANDLED                                        // Opcode not handled yet
 };
 
 enum PacketProcessing
@@ -1366,7 +1360,14 @@ enum PacketProcessing
     PROCESS_THREADSAFE                                      //packet is thread-safe - process it in Map::Update()
 };
 
+class WorldSession;
 class WorldPacket;
+
+#if defined(__GNUC__)
+#pragma pack(1)
+#else
+#pragma pack(push, 1)
+#endif
 
 struct OpcodeHandler
 {
@@ -1378,6 +1379,12 @@ struct OpcodeHandler
 
 extern OpcodeHandler opcodeTable[NUM_MSG_TYPES];
 
+#if defined(__GNUC__)
+#pragma pack()
+#else
+#pragma pack(pop)
+#endif
+
 /// Lookup opcode name for human understandable logging
 inline const char* LookupOpcodeName(uint16 id)
 {
@@ -1385,5 +1392,13 @@ inline const char* LookupOpcodeName(uint16 id)
         return "Received unknown opcode, it's more than max!";
     return opcodeTable[id].name;
 }
+
+inline std::string GetOpcodeNameForLogging(uint16 opcode)
+{
+    std::ostringstream ss;
+    ss << '[' << LookupOpcodeName(opcode) << " 0x" << std::hex << std::uppercase << opcode << std::nouppercase << " (" << std::dec << opcode << ")]";
+    return ss.str();
+}
+
 #endif
 /// @}

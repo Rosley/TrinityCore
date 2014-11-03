@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,7 +19,10 @@
 #ifndef __BATTLEGROUNDIC_H
 #define __BATTLEGROUNDIC_H
 
-class Battleground;
+#include "Battleground.h"
+#include "BattlegroundScore.h"
+#include "Language.h"
+#include "Object.h"
 
 const uint32 BG_IC_Factions[2] =
 {
@@ -178,19 +181,19 @@ enum gameobjectsIC
     GO_HORDE_BANNER_GRAVEYARD_H_CONT = 195394,
 
     GO_HORDE_GUNSHIP = 195276,
-    GO_ALLIANCE_GUNSHIP = 195121,
+    GO_ALLIANCE_GUNSHIP = 195121
 };
 
 #define MAX_REINFORCEMENTS 300
 
 enum Times
 {
-    WORKSHOP_UPDATE_TIME = 180000, // 3 minutes
-    DOCKS_UPDATE_TIME = 180000, // not sure if it is 3 minutes
-    IC_RESOURCE_TIME = 45000, // not sure, need more research
-    CLOSE_DOORS_TIME = 20000,
+    WORKSHOP_UPDATE_TIME     = 180000, // 3 minutes
+    DOCKS_UPDATE_TIME        = 180000, // not sure if it is 3 minutes
+    IC_RESOURCE_TIME         = 45000, // not sure, need more research
+    CLOSE_DOORS_TIME         = 20000,
     BANNER_STATE_CHANGE_TIME = 60000,
-    TRANSPORT_PERIOD_TIME = 120000
+    TRANSPORT_PERIOD_TIME    = 120000
 };
 
 enum Actions
@@ -202,7 +205,7 @@ struct ICNpc
 {
     uint32 type;
     uint32 entry;
-    uint32 team;
+    TeamId team;
     float x;
     float y;
     float z;
@@ -336,7 +339,7 @@ enum BG_IC_GOs
     BG_IC_GO_TELEPORTER_EFFECTS_H_3,
     BG_IC_GO_TELEPORTER_EFFECTS_H_4,
     BG_IC_GO_TELEPORTER_EFFECTS_H_5,
-    BG_IC_GO_TELEPORTER_EFFECTS_H_6,
+    BG_IC_GO_TELEPORTER_EFFECTS_H_6
 };
 
 enum BG_IC_NPCs
@@ -411,7 +414,7 @@ enum BG_IC_NPCs
     BG_IC_NPC_SPIRIT_GUIDE_4,
     BG_IC_NPC_SPIRIT_GUIDE_5,
     BG_IC_NPC_SPIRIT_GUIDE_6,
-    BG_IC_NPC_SPIRIT_GUIDE_7,
+    BG_IC_NPC_SPIRIT_GUIDE_7
 };
 
 enum BannersTypes
@@ -654,18 +657,16 @@ const Position workshopBombs[2] =
 
 enum Spells
 {
-    SPELL_OIL_REFINERY      = 68719,
-    SPELL_QUARRY            = 68720,
-
-    SPELL_PARACHUTE = 66656,
-    SPELL_SLOW_FALL = 12438,
-
-    SPELL_DESTROYED_VEHICLE_ACHIEVEMENT = 68357,
-
-    SPELL_DRIVING_CREDIT_DEMOLISHER = 68365,
-    SPELL_DRIVING_CREDIT_GLAIVE = 68363,
-    SPELL_DRIVING_CREDIT_SIEGE = 68364,
-    SPELL_DRIVING_CREDIT_CATAPULT = 68362
+    SPELL_OIL_REFINERY                     = 68719,
+    SPELL_QUARRY                           = 68720,
+    SPELL_PARACHUTE                        = 66656,
+    SPELL_SLOW_FALL                        = 12438,
+    SPELL_DESTROYED_VEHICLE_ACHIEVEMENT    = 68357,
+    SPELL_BACK_DOOR_JOB_ACHIEVEMENT        = 68502,
+    SPELL_DRIVING_CREDIT_DEMOLISHER        = 68365,
+    SPELL_DRIVING_CREDIT_GLAIVE            = 68363,
+    SPELL_DRIVING_CREDIT_SIEGE             = 68364,
+    SPELL_DRIVING_CREDIT_CATAPULT          = 68362,
 };
 
 enum BG_IC_Objectives
@@ -751,7 +752,7 @@ enum ICDoorList
     BG_IC_A_FRONT,
     BG_IC_A_WEST,
     BG_IC_A_EAST,
-    BG_IC_MAXDOOR,
+    BG_IC_MAXDOOR
 };
 
 enum ICNodePointType
@@ -783,7 +784,7 @@ const uint32 BG_IC_GraveyardIds[MAX_NODE_TYPES+2] = {0, 0, 1480, 1481, 1482, 148
 const Position TransportMovementInfo = {7.305609f, -0.095246f, 34.51022f, 0.0f};
 const Position TeleportToTransportPosition = {661.0f, -1244.0f, 288.0f, 0.0f};
 
-const float BG_IC_SpiritGuidePos[MAX_NODE_TYPES+2][4] =
+Position const BG_IC_SpiritGuidePos[MAX_NODE_TYPES+2] =
 {
     {0.0f, 0.0f, 0.0f, 0.0f},                     // no grave
     {0.0f, 0.0f, 0.0f, 0.0f},                     // no grave
@@ -818,8 +819,8 @@ const Position allianceGunshipPassengers[5] =
 struct ICNodePoint
 {
     uint32 gameobject_type; // with this we will get the GameObject of that point
-    uint32 gameobject_entry; // what gamoebject entry is active here.
-    uint8 faction; // who has this node
+    uint32 gameobject_entry; // what gameobject entry is active here.
+    TeamId faction; // who has this node
     ICNodePointType nodeType; // here we can specify if it is graveyards, hangar etc...
     uint32 banners[4]; // the banners that have this point
     bool needChange; // this is used for the 1 minute time period after the point is captured
@@ -847,11 +848,36 @@ enum HonorRewards
     WINNER_HONOR_AMOUNT = 500
 };
 
-class BattlegroundICScore : public BattlegroundScore
+struct BattlegroundICScore final : public BattlegroundScore
 {
-    public:
-        BattlegroundICScore() : BasesAssaulted(0), BasesDefended(0) {};
-        virtual ~BattlegroundICScore() {};
+    friend class BattlegroundIC;
+
+    protected:
+        BattlegroundICScore(uint64 playerGuid) : BattlegroundScore(playerGuid), BasesAssaulted(0), BasesDefended(0) { }
+
+        void UpdateScore(uint32 type, uint32 value) override
+        {
+            switch (type)
+            {
+                case SCORE_BASES_ASSAULTED:
+                    BasesAssaulted += value;
+                    break;
+                case SCORE_BASES_DEFENDED:
+                    BasesDefended += value;
+                    break;
+                default:
+                    BattlegroundScore::UpdateScore(type, value);
+                    break;
+            }
+        }
+
+        void BuildObjectivesBlock(WorldPacket& data) final override
+        {
+            data << uint32(2); // Objectives Count
+            data << uint32(BasesAssaulted);
+            data << uint32(BasesDefended);
+        }
+
         uint32 BasesAssaulted;
         uint32 BasesDefended;
 };
@@ -863,37 +889,37 @@ class BattlegroundIC : public Battleground
         ~BattlegroundIC();
 
         /* inherited from BattlegroundClass */
-        virtual void AddPlayer(Player* player);
-        virtual void StartingEventCloseDoors();
-        virtual void StartingEventOpenDoors();
-        virtual void PostUpdateImpl(uint32 diff);
+        void AddPlayer(Player* player) override;
+        void StartingEventCloseDoors() override;
+        void StartingEventOpenDoors() override;
+        void PostUpdateImpl(uint32 diff) override;
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-        bool SetupBattleground();
+        void RemovePlayer(Player* player, uint64 guid, uint32 team) override;
+        void HandleAreaTrigger(Player* player, uint32 trigger) override;
+        bool SetupBattleground() override;
         void SpawnLeader(uint32 teamid);
-        void HandleKillUnit(Creature* unit, Player* killer);
-        void HandleKillPlayer(Player* player, Player* killer);
-        void EndBattleground(uint32 winner);
-        void EventPlayerClickedOnFlag(Player* source, GameObject* /*target_obj*/);
+        void HandleKillUnit(Creature* unit, Player* killer) override;
+        void HandleKillPlayer(Player* player, Player* killer) override;
+        void EndBattleground(uint32 winner) override;
+        void EventPlayerClickedOnFlag(Player* source, GameObject* /*target_obj*/) override;
 
-        void EventPlayerDamagedGO(Player* /*player*/, GameObject* go, uint32 eventType);
-        void DestroyGate(Player* player, GameObject* go);
+        void DestroyGate(Player* player, GameObject* go) override;
 
-        virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
+        WorldSafeLocsEntry const* GetClosestGraveYard(Player* player) override;
 
         /* Scorekeeping */
-        void UpdatePlayerScore(Player* Source, uint32 type, uint32 value, bool doAddHonor = true);
+        void FillInitialWorldStates(WorldPacket& data) override;
 
-        void FillInitialWorldStates(WorldPacket& data);
+        void DoAction(uint32 action, uint64 var) override;
 
-        void DoAction(uint32 action, uint64 var);
+        void HandlePlayerResurrect(Player* player) override;
 
-        virtual void HandlePlayerResurrect(Player* player);
+        uint32 GetNodeState(uint8 nodeType) const { return (uint8)nodePoint[nodeType].nodeState; }
 
-        uint32 GetNodeState(uint8 nodeType) { return (uint8)nodePoint[nodeType].nodeState; }
+        bool IsAllNodesControlledByTeam(uint32 team) const override;
 
-        virtual bool IsAllNodesConrolledByTeam(uint32 team) const;  // overwrited
+        bool IsSpellAllowed(uint32 spellId, Player const* player) const override;
+
     private:
         uint32 closeFortressDoorsTimer;
         bool doorsClosed;
@@ -952,11 +978,9 @@ class BattlegroundIC : public Battleground
             return uws;
         }
 
-        void RealocatePlayers(ICNodePointType nodeType);
         void UpdateNodeWorldState(ICNodePoint* nodePoint);
         void HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture);
         void HandleContestedNodes(ICNodePoint* nodePoint);
-        Transport* CreateTransport(uint32 goEntry, uint32 period);
-        void SendTransportInit(Player* player);
 };
+
 #endif

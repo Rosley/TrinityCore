@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,17 +19,17 @@
 /* ScriptData
 SDName: Boss Loken
 SD%Complete: 60%
-SDComment: Missing intro. Remove hack of Pulsing Shockwave when core supports. Aura is not working (59414)
+SDComment: Missing intro.
 SDCategory: Halls of Lightning
 EndScriptData */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "SpellScript.h"
 #include "halls_of_lightning.h"
 
-enum eEnums
+enum Yells
 {
-    ACHIEV_TIMELY_DEATH_START_EVENT               = 20384,
-
     SAY_INTRO_1                                   = 0,
     SAY_INTRO_2                                   = 1,
     SAY_AGGRO                                     = 2,
@@ -39,8 +39,11 @@ enum eEnums
     SAY_50HEALTH                                  = 6,
     SAY_25HEALTH                                  = 7,
     SAY_DEATH                                     = 8,
-    EMOTE_NOVA                                    = 9,
+    EMOTE_NOVA                                    = 9
+};
 
+enum Spells
+{
     SPELL_ARC_LIGHTNING                           = 52921,
     SPELL_LIGHTNING_NOVA_N                        = 52960,
     SPELL_LIGHTNING_NOVA_H                        = 59835,
@@ -48,6 +51,11 @@ enum eEnums
     SPELL_PULSING_SHOCKWAVE_N                     = 52961,
     SPELL_PULSING_SHOCKWAVE_H                     = 59836,
     SPELL_PULSING_SHOCKWAVE_AURA                  = 59414
+};
+
+enum Misc
+{
+    ACHIEV_TIMELY_DEATH_START_EVENT               = 20384
 };
 
 /*######
@@ -59,9 +67,9 @@ class boss_loken : public CreatureScript
 public:
     boss_loken() : CreatureScript("boss_loken") { }
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
-        return new boss_lokenAI(creature);
+        return GetInstanceAI<boss_lokenAI>(creature);
     }
 
     struct boss_lokenAI : public ScriptedAI
@@ -73,101 +81,60 @@ public:
 
         InstanceScript* instance;
 
-        bool m_bIsAura;
-
         uint32 m_uiArcLightning_Timer;
         uint32 m_uiLightningNova_Timer;
-        uint32 m_uiPulsingShockwave_Timer;
         uint32 m_uiResumePulsingShockwave_Timer;
 
         uint32 m_uiHealthAmountModifier;
 
-        void Reset()
+        void Reset() override
         {
-            m_bIsAura = false;
-
             m_uiArcLightning_Timer = 15000;
             m_uiLightningNova_Timer = 20000;
-            m_uiPulsingShockwave_Timer = 2000;
-            m_uiResumePulsingShockwave_Timer = 15000;
+            m_uiResumePulsingShockwave_Timer = 1000;
 
             m_uiHealthAmountModifier = 1;
 
-            if (instance)
-            {
-                instance->SetData(TYPE_LOKEN, NOT_STARTED);
-                instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
-            }
+            instance->SetBossState(DATA_LOKEN, NOT_STARTED);
+            instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
         }
 
-        void EnterCombat(Unit* /*who*/)
+        void EnterCombat(Unit* /*who*/) override
         {
             Talk(SAY_AGGRO);
 
-            if (instance)
-            {
-                instance->SetData(TYPE_LOKEN, IN_PROGRESS);
-                instance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
-            }
+            instance->SetBossState(DATA_LOKEN, IN_PROGRESS);
+            instance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
         }
 
-        void JustDied(Unit* /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             Talk(SAY_DEATH);
 
-            if (instance)
-                instance->SetData(TYPE_LOKEN, DONE);
+            instance->SetBossState(DATA_LOKEN, DONE);
+            instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_PULSING_SHOCKWAVE_AURA);
         }
 
-        void KilledUnit(Unit* /*victim*/)
+        void KilledUnit(Unit* who) override
         {
-            Talk(SAY_SLAY);
+            if (who->GetTypeId() == TYPEID_PLAYER)
+                Talk(SAY_SLAY);
         }
 
-        void UpdateAI(const uint32 uiDiff)
+        void UpdateAI(uint32 uiDiff) override
         {
             //Return since we have no target
             if (!UpdateVictim())
                 return;
 
-            if (m_bIsAura)
-            {
-                // workaround for PULSING_SHOCKWAVE
-                if (m_uiPulsingShockwave_Timer <= uiDiff)
-                {
-                    Map* map = me->GetMap();
-                    if (map->IsDungeon())
-                    {
-                        Map::PlayerList const &PlayerList = map->GetPlayers();
-
-                        if (PlayerList.isEmpty())
-                            return;
-
-                        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                            if (i->getSource() && i->getSource()->isAlive() && i->getSource()->isTargetableForAttack())
-                            {
-                                int32 dmg;
-                                float m_fDist = me->GetExactDist(i->getSource()->GetPositionX(), i->getSource()->GetPositionY(), i->getSource()->GetPositionZ());
-
-                                dmg = DUNGEON_MODE(100, 150); // need to correct damage
-                                if (m_fDist > 1.0f) // Further from 1 yard
-                                    dmg = int32(dmg*m_fDist);
-
-                                me->CastCustomSpell(i->getSource(), DUNGEON_MODE(52942, 59837), &dmg, 0, 0, false);
-                            }
-                    }
-                    m_uiPulsingShockwave_Timer = 2000;
-                } else m_uiPulsingShockwave_Timer -= uiDiff;
-            }
-            else
+            if (m_uiResumePulsingShockwave_Timer)
             {
                 if (m_uiResumePulsingShockwave_Timer <= uiDiff)
                 {
-                    //breaks at movement, can we assume when it's time, this spell is casted and also must stop movement?
                     DoCast(me, SPELL_PULSING_SHOCKWAVE_AURA, true);
+                    me->ClearUnitState(UNIT_STATE_CASTING); // this flag breaks movement
 
-                    DoCast(me, SPELL_PULSING_SHOCKWAVE_N); // need core support
-                    m_bIsAura = true;
+                    DoCast(me, SPELL_PULSING_SHOCKWAVE_N, true);
                     m_uiResumePulsingShockwave_Timer = 0;
                 }
                 else
@@ -190,7 +157,7 @@ public:
                 Talk(EMOTE_NOVA);
                 DoCast(me, SPELL_LIGHTNING_NOVA_N);
 
-                m_bIsAura = false;
+                me->RemoveAurasDueToSpell(DUNGEON_MODE<uint32>(SPELL_PULSING_SHOCKWAVE_N, SPELL_PULSING_SHOCKWAVE_H));
                 m_uiResumePulsingShockwave_Timer = DUNGEON_MODE(5000, 4000); // Pause Pulsing Shockwave aura
                 m_uiLightningNova_Timer = urand(20000, 21000);
             }
@@ -216,7 +183,39 @@ public:
 
 };
 
+class spell_loken_pulsing_shockwave : public SpellScriptLoader
+{
+    public:
+        spell_loken_pulsing_shockwave() : SpellScriptLoader("spell_loken_pulsing_shockwave") { }
+
+        class spell_loken_pulsing_shockwave_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_loken_pulsing_shockwave_SpellScript);
+
+            void CalculateDamage(SpellEffIndex /*effIndex*/)
+            {
+                if (!GetHitUnit())
+                    return;
+
+                float distance = GetCaster()->GetDistance2d(GetHitUnit());
+                if (distance > 1.0f)
+                    SetHitDamage(int32(GetHitDamage() * distance));
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_loken_pulsing_shockwave_SpellScript::CalculateDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_loken_pulsing_shockwave_SpellScript();
+        }
+};
+
 void AddSC_boss_loken()
 {
     new boss_loken();
+    new spell_loken_pulsing_shockwave();
 }

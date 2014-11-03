@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,7 +18,7 @@
 #ifndef _QUERYHOLDER_H
 #define _QUERYHOLDER_H
 
-#include <ace/Future.h>
+#include <future>
 
 class SQLQueryHolder
 {
@@ -27,7 +27,7 @@ class SQLQueryHolder
         typedef std::pair<SQLElementData, SQLResultSetUnion> SQLResultPair;
         std::vector<SQLResultPair> m_queries;
     public:
-        SQLQueryHolder() {}
+        SQLQueryHolder() { }
         ~SQLQueryHolder();
         bool SetQuery(size_t index, const char *sql);
         bool SetPQuery(size_t index, const char *format, ...) ATTR_PRINTF(3, 4);
@@ -39,18 +39,21 @@ class SQLQueryHolder
         void SetPreparedResult(size_t index, PreparedResultSet* result);
 };
 
-typedef ACE_Future<SQLQueryHolder*> QueryResultHolderFuture;
+typedef std::future<SQLQueryHolder*> QueryResultHolderFuture;
+typedef std::promise<SQLQueryHolder*> QueryResultHolderPromise;
 
 class SQLQueryHolderTask : public SQLOperation
 {
     private:
-        SQLQueryHolder * m_holder;
-        QueryResultHolderFuture m_result;
+        SQLQueryHolder* m_holder;
+        QueryResultHolderPromise m_result;
 
     public:
-        SQLQueryHolderTask(SQLQueryHolder *holder, QueryResultHolderFuture res)
-            : m_holder(holder), m_result(res){};
-        bool Execute();
+        SQLQueryHolderTask(SQLQueryHolder* holder)
+            : m_holder(holder) { };
+
+        bool Execute() override;
+        QueryResultHolderFuture GetFuture() { return m_result.get_future(); }
 
 };
 

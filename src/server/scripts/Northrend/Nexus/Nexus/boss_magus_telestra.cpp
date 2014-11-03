@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,7 +16,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 #include "nexus.h"
 
 enum Spells
@@ -35,23 +36,25 @@ enum Spells
 
 enum Creatures
 {
-    MOB_FIRE_MAGUS                                = 26928,
-    MOB_FROST_MAGUS                               = 26930,
-    MOB_ARCANE_MAGUS                              = 26929
+    NPC_FIRE_MAGUS                                = 26928,
+    NPC_FROST_MAGUS                               = 26930,
+    NPC_ARCANE_MAGUS                              = 26929
 };
 
 enum Yells
 {
-    SAY_AGGRO                                     = -1576000,
-    SAY_KILL                                      = -1576001,
-    SAY_DEATH                                     = -1576002,
-    SAY_MERGE                                     = -1576003,
-    SAY_SPLIT_1                                   = -1576004,
-    SAY_SPLIT_2                                   = -1576005,
+    SAY_AGGRO                                     = 0,
+    SAY_KILL                                      = 1,
+    SAY_DEATH                                     = 2,
+    SAY_MERGE                                     = 3,
+    SAY_SPLIT                                     = 4
 };
 
-#define ACTION_MAGUS_DEAD                         1
-#define DATA_SPLIT_PERSONALITY                    2
+enum Misc
+{
+    ACTION_MAGUS_DEAD                             = 1,
+    DATA_SPLIT_PERSONALITY                        = 2
+};
 
 const Position  CenterOfRoom = {504.80f, 89.07f, -16.12f, 6.27f};
 
@@ -60,9 +63,9 @@ class boss_magus_telestra : public CreatureScript
 public:
     boss_magus_telestra() : CreatureScript("boss_magus_telestra") { }
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
-        return new boss_magus_telestraAI (creature);
+        return GetInstanceAI<boss_magus_telestraAI>(creature);
     }
 
     struct boss_magus_telestraAI : public ScriptedAI
@@ -93,7 +96,7 @@ public:
         uint8 splitPersonality;
         time_t time[3];
 
-        void Reset()
+        void Reset() override
         {
             Phase = 0;
             //These times are probably wrong
@@ -115,32 +118,30 @@ public:
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             me->SetVisible(true);
 
-            if (instance)
-                instance->SetData(DATA_MAGUS_TELESTRA_EVENT, NOT_STARTED);
+            instance->SetData(DATA_MAGUS_TELESTRA_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/)
+        void EnterCombat(Unit* /*who*/) override
         {
-            DoScriptText(SAY_AGGRO, me);
+            Talk(SAY_AGGRO);
 
-            if (instance)
-                instance->SetData(DATA_MAGUS_TELESTRA_EVENT, IN_PROGRESS);
+            instance->SetData(DATA_MAGUS_TELESTRA_EVENT, IN_PROGRESS);
         }
 
-        void JustDied(Unit* /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
-            DoScriptText(SAY_DEATH, me);
+            Talk(SAY_DEATH);
 
-            if (instance)
-                instance->SetData(DATA_MAGUS_TELESTRA_EVENT, DONE);
+            instance->SetData(DATA_MAGUS_TELESTRA_EVENT, DONE);
         }
 
-        void KilledUnit(Unit* /*victim*/)
+        void KilledUnit(Unit* who) override
         {
-            DoScriptText(SAY_KILL, me);
+            if (who->GetTypeId() == TYPEID_PLAYER)
+                Talk(SAY_KILL);
         }
 
-        void DoAction(int32 const action)
+        void DoAction(int32 action) override
         {
             if (action == ACTION_MAGUS_DEAD)
             {
@@ -154,7 +155,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 type)
+        uint32 GetData(uint32 type) const override
         {
             if (type == DATA_SPLIT_PERSONALITY)
                 return splitPersonality;
@@ -168,17 +169,17 @@ public:
             {
                 switch (entry)
                 {
-                    case MOB_FIRE_MAGUS:
+                    case NPC_FIRE_MAGUS:
                     {
                         Summoned->CastSpell(Summoned, SPELL_FIRE_MAGUS_VISUAL, false);
                         break;
                     }
-                    case MOB_FROST_MAGUS:
+                    case NPC_FROST_MAGUS:
                     {
                         Summoned->CastSpell(Summoned, SPELL_FROST_MAGUS_VISUAL, false);
                         break;
                     }
-                    case MOB_ARCANE_MAGUS:
+                    case NPC_ARCANE_MAGUS:
                     {
                         Summoned->CastSpell(Summoned, SPELL_ARCANE_MAGUS_VISUAL, false);
                         break;
@@ -191,29 +192,29 @@ public:
             return 0;
         }
 
-        void SummonedCreatureDespawn(Creature* summon)
+        void SummonedCreatureDespawn(Creature* summon) override
         {
-            if (summon->isAlive())
+            if (summon->IsAlive())
                 return;
 
             if (summon->GetGUID() == uiFireMagusGUID)
             {
-                me->AI()->DoAction(ACTION_MAGUS_DEAD);
+                DoAction(ACTION_MAGUS_DEAD);
                 bFireMagusDead = true;
             }
             else if (summon->GetGUID() == uiFrostMagusGUID)
             {
-                me->AI()->DoAction(ACTION_MAGUS_DEAD);
+                DoAction(ACTION_MAGUS_DEAD);
                 bFrostMagusDead = true;
             }
             else if (summon->GetGUID() == uiArcaneMagusGUID)
             {
-                me->AI()->DoAction(ACTION_MAGUS_DEAD);
+                DoAction(ACTION_MAGUS_DEAD);
                 bArcaneMagusDead = true;
             }
         }
 
-        void UpdateAI(const uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             //Return since we have no target
             if (!UpdateVictim())
@@ -250,7 +251,7 @@ public:
                     uiArcaneMagusGUID = 0;
                     bIsWaitingToAppear = true;
                     uiIsWaitingToAppearTimer = 4*IN_MILLISECONDS;
-                    DoScriptText(SAY_MERGE, me);
+                    Talk(SAY_MERGE);
                 }
                 else
                     return;
@@ -263,13 +264,13 @@ public:
                 me->RemoveAllAuras();
                 me->SetVisible(false);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                uiFireMagusGUID = SplitPersonality(MOB_FIRE_MAGUS);
-                uiFrostMagusGUID = SplitPersonality(MOB_FROST_MAGUS);
-                uiArcaneMagusGUID = SplitPersonality(MOB_ARCANE_MAGUS);
+                uiFireMagusGUID = SplitPersonality(NPC_FIRE_MAGUS);
+                uiFrostMagusGUID = SplitPersonality(NPC_FROST_MAGUS);
+                uiArcaneMagusGUID = SplitPersonality(NPC_ARCANE_MAGUS);
                 bFireMagusDead = false;
                 bFrostMagusDead = false;
                 bArcaneMagusDead = false;
-                DoScriptText(RAND(SAY_SPLIT_1, SAY_SPLIT_2), me);
+                Talk(SAY_SPLIT);
                 return;
             }
 
@@ -280,13 +281,13 @@ public:
                 me->RemoveAllAuras();
                 me->SetVisible(false);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                uiFireMagusGUID = SplitPersonality(MOB_FIRE_MAGUS);
-                uiFrostMagusGUID = SplitPersonality(MOB_FROST_MAGUS);
-                uiArcaneMagusGUID = SplitPersonality(MOB_ARCANE_MAGUS);
+                uiFireMagusGUID = SplitPersonality(NPC_FIRE_MAGUS);
+                uiFrostMagusGUID = SplitPersonality(NPC_FROST_MAGUS);
+                uiArcaneMagusGUID = SplitPersonality(NPC_ARCANE_MAGUS);
                 bFireMagusDead = false;
                 bFrostMagusDead = false;
                 bArcaneMagusDead = false;
-                DoScriptText(RAND(SAY_SPLIT_1, SAY_SPLIT_2), me);
+                Talk(SAY_SPLIT);
                 return;
             }
 
@@ -313,7 +314,7 @@ public:
 
             if (uiGravityWellTimer <= diff)
             {
-                if (Unit* target = me->getVictim())
+                if (Unit* target = me->GetVictim())
                 {
                     DoCast(target, SPELL_GRAVITY_WELL);
                     uiCooldown = 6*IN_MILLISECONDS;
@@ -344,7 +345,7 @@ class achievement_split_personality : public AchievementCriteriaScript
         {
         }
 
-        bool OnCheck(Player* /*player*/, Unit* target)
+        bool OnCheck(Player* /*player*/, Unit* target) override
         {
             if (!target)
                 return false;

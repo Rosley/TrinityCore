@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,52 +22,54 @@ Comment: All learn related commands
 Category: commandscripts
 EndScriptData */
 
+#include "Chat.h"
 #include "ScriptMgr.h"
 #include "ObjectMgr.h"
+#include "Language.h"
 #include "SpellMgr.h"
-#include "Chat.h"
 #include "SpellInfo.h"
-#include "DisableMgr.h"
+#include "Player.h"
+#include "Pet.h"
 
 class learn_commandscript : public CommandScript
 {
 public:
     learn_commandscript() : CommandScript("learn_commandscript") { }
 
-    ChatCommand* GetCommands() const
+    ChatCommand* GetCommands() const override
     {
         static ChatCommand learnAllMyCommandTable[] =
         {
-            { "class",          SEC_ADMINISTRATOR,  false, &HandleLearnAllMyClassCommand,      "", NULL },
-            { "pettalents",     SEC_ADMINISTRATOR,  false, &HandleLearnAllMyPetTalentsCommand, "", NULL },
-            { "spells",         SEC_ADMINISTRATOR,  false, &HandleLearnAllMySpellsCommand,     "", NULL },
-            { "talents",        SEC_ADMINISTRATOR,  false, &HandleLearnAllMyTalentsCommand,    "", NULL },
-            { NULL,             0,                  false, NULL,                               "", NULL }
+            { "class",      rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_CLASS,      false, &HandleLearnAllMyClassCommand,      "", NULL },
+            { "pettalents", rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_PETTALENTS, false, &HandleLearnAllMyPetTalentsCommand, "", NULL },
+            { "spells",     rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_SPELLS,     false, &HandleLearnAllMySpellsCommand,     "", NULL },
+            { "talents",    rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_TALENTS,    false, &HandleLearnAllMyTalentsCommand,    "", NULL },
+            { NULL,         0,                                         false, NULL,                               "", NULL }
         };
 
         static ChatCommand learnAllCommandTable[] =
         {
-            { "my",             SEC_ADMINISTRATOR,  false, NULL,            "",  learnAllMyCommandTable },
-            { "gm",             SEC_GAMEMASTER,     false, &HandleLearnAllGMCommand,           "", NULL },
-            { "crafts",         SEC_GAMEMASTER,     false, &HandleLearnAllCraftsCommand,       "", NULL },
-            { "default",        SEC_MODERATOR,      false, &HandleLearnAllDefaultCommand,      "", NULL },
-            { "lang",           SEC_MODERATOR,      false, &HandleLearnAllLangCommand,         "", NULL },
-            { "recipes",        SEC_GAMEMASTER,     false, &HandleLearnAllRecipesCommand,      "", NULL },
-            { "",               SEC_ADMINISTRATOR,  false, &HandleLearnAllMyClassCommand,      "", NULL },
-            { NULL,             0,                  false, NULL,                               "", NULL }
+            { "my",      rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY,      false, NULL,                          "", learnAllMyCommandTable },
+            { "gm",      rbac::RBAC_PERM_COMMAND_LEARN_ALL_GM,      false, &HandleLearnAllGMCommand,      "", NULL },
+            { "crafts",  rbac::RBAC_PERM_COMMAND_LEARN_ALL_CRAFTS,  false, &HandleLearnAllCraftsCommand,  "", NULL },
+            { "default", rbac::RBAC_PERM_COMMAND_LEARN_ALL_DEFAULT, false, &HandleLearnAllDefaultCommand, "", NULL },
+            { "lang",    rbac::RBAC_PERM_COMMAND_LEARN_ALL_LANG,    false, &HandleLearnAllLangCommand,    "", NULL },
+            { "recipes", rbac::RBAC_PERM_COMMAND_LEARN_ALL_RECIPES, false, &HandleLearnAllRecipesCommand, "", NULL },
+            { NULL,      0,                                   false, NULL,                          "", NULL }
         };
 
         static ChatCommand learnCommandTable[] =
         {
-            { "all",            SEC_ADMINISTRATOR,  false, NULL,              "",  learnAllCommandTable },
-            { "",               SEC_ADMINISTRATOR,  false, &HandleLearnCommand,                "", NULL },
-            { NULL,             0,                  false, NULL,                               "", NULL }
+            { "all", rbac::RBAC_PERM_COMMAND_LEARN_ALL, false, NULL,                "", learnAllCommandTable },
+            { "",    rbac::RBAC_PERM_COMMAND_LEARN,     false, &HandleLearnCommand, "", NULL },
+            { NULL,  0,                           false, NULL,                "", NULL }
         };
 
         static ChatCommand commandTable[] =
         {
-            { "learn",          SEC_MODERATOR,      false, NULL,                  "", learnCommandTable },
-            { NULL,             0,                  false, NULL,                               "", NULL }
+            { "learn",   rbac::RBAC_PERM_COMMAND_LEARN,   false, NULL,                  "", learnCommandTable },
+            { "unlearn", rbac::RBAC_PERM_COMMAND_UNLEARN, false, &HandleUnLearnCommand, "", NULL },
+            { NULL,      0,                         false, NULL,                  "", NULL }
         };
         return commandTable;
     }
@@ -83,22 +85,16 @@ public:
             return false;
         }
 
-        if (!targetPlayer->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != targetPlayer->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", targetPlayer->GetName());
-            return true;
-        }
+		if (!targetPlayer->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != targetPlayer->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", targetPlayer->GetName().c_str());
+			return true;
+		}
 
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
         uint32 spell = handler->extractSpellIdFromLink((char*)args);
         if (!spell || !sSpellMgr->GetSpellInfo(spell))
             return false;
-
-        if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_SPELL, spell) && !handler->GetSession()->GetPlayer())
-        {
-            handler->PSendSysMessage("This spell (id '%u') is disabled.", spell);
-            return true;
-        }
 
         char const* all = strtok(NULL, " ");
         bool allRanks = all ? (strncmp(all, "all", strlen(all)) == 0) : false;
@@ -122,12 +118,11 @@ public:
         }
 
         if (allRanks)
-            targetPlayer->learnSpellHighRank(spell);
+            targetPlayer->LearnSpellHighestRank(spell);
         else
-            targetPlayer->learnSpell(spell, false);
+            targetPlayer->LearnSpell(spell, false);
 
-        uint32 firstSpell = sSpellMgr->GetFirstSpellInChain(spell);
-        if (GetTalentSpellCost(firstSpell))
+        if (GetTalentSpellCost(spellInfo->GetFirstRankSpell()->Id))
             targetPlayer->SendTalentsInfoData(false);
 
         return true;
@@ -144,7 +139,7 @@ public:
             if (!spellInfo->IsAbilityOfSkillType(SKILL_INTERNAL))
                 continue;
 
-            handler->GetSession()->GetPlayer()->learnSpell(i, false);
+            handler->GetSession()->GetPlayer()->LearnSpell(i, false);
         }
 
         handler->SendSysMessage(LANG_LEARNING_GM_SKILLS);
@@ -188,15 +183,14 @@ public:
                 continue;
 
             // skip spells with first rank learned as talent (and all talents then also)
-            uint32 firstRank = sSpellMgr->GetFirstSpellInChain(spellInfo->Id);
-            if (GetTalentSpellCost(firstRank) > 0)
+            if (GetTalentSpellCost(spellInfo->GetFirstRankSpell()->Id) > 0)
                 continue;
 
             // skip broken spells
             if (!SpellMgr::IsSpellValid(spellInfo, handler->GetSession()->GetPlayer(), false))
                 continue;
 
-            handler->GetSession()->GetPlayer()->learnSpell(spellInfo->Id, false);
+            handler->GetSession()->GetPlayer()->LearnSpell(spellInfo->Id, false);
         }
 
         handler->SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
@@ -240,7 +234,7 @@ public:
                 continue;
 
             // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
-            player->learnSpellHighRank(spellId);
+            player->LearnSpellHighestRank(spellId);
             player->AddTalent(spellId, player->GetActiveSpec(), true);
         }
 
@@ -332,7 +326,7 @@ public:
     {
         // skipping UNIVERSAL language (0)
         for (uint8 i = 1; i < LANGUAGES_COUNT; ++i)
-            handler->GetSession()->GetPlayer()->learnSpell(lang_description[i].spell_id, false);
+            handler->GetSession()->GetPlayer()->LearnSpell(lang_description[i].spell_id, false);
 
         handler->SendSysMessage(LANG_COMMAND_LEARN_ALL_LANG);
         return true;
@@ -344,21 +338,26 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &target))
             return false;
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
-        target->learnDefaultSpells();
-        target->learnQuestRewardedSpells();
+        target->LearnDefaultSkills();
+        target->LearnCustomSpells();
+        target->LearnQuestRewardedSpells();
 
         handler->PSendSysMessage(LANG_COMMAND_LEARN_ALL_DEFAULT_AND_QUEST, handler->GetNameLink(target).c_str());
         return true;
     }
 
-    static bool HandleLearnAllCraftsCommand(ChatHandler* handler, char const* /*args*/)
+    static bool HandleLearnAllCraftsCommand(ChatHandler* handler, char const* args)
     {
+        Player* target;
+        if (!handler->extractPlayerTarget((char*)args, &target))
+            return false;
+
         for (uint32 i = 0; i < sSkillLineStore.GetNumRows(); ++i)
         {
             SkillLineEntry const* skillInfo = sSkillLineStore.LookupEntry(i);
@@ -368,7 +367,7 @@ public:
             if ((skillInfo->categoryId == SKILL_CATEGORY_PROFESSION || skillInfo->categoryId == SKILL_CATEGORY_SECONDARY) &&
                 skillInfo->canLink)                             // only prof. with recipes have
             {
-                HandleLearnSkillRecipesHelper(handler->GetSession()->GetPlayer(), skillInfo->id);
+                HandleLearnSkillRecipesHelper(target, skillInfo->id);
             }
         }
 
@@ -388,11 +387,11 @@ public:
             return false;
         }
 
-        if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
-        {
-            handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName());
-            return true;
-        }
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
 
         if (!*args)
             return false;
@@ -489,8 +488,49 @@ public:
             if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo, player, false))
                 continue;
 
-            player->learnSpell(skillLine->spellId, false);
+            player->LearnSpell(skillLine->spellId, false);
         }
+    }
+
+    static bool HandleUnLearnCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+        if (!spellId)
+            return false;
+
+        char const* allStr = strtok(NULL, " ");
+        bool allRanks = allStr ? (strncmp(allStr, "all", strlen(allStr)) == 0) : false;
+
+        Player* target = handler->getSelectedPlayer();
+        if (!target)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+		if (!target->GetCommandStatus(TOGGLE_MODIFY) && !handler->GetSession()->GetPlayer()->IsAdmin() && handler->GetSession()->GetPlayer()->GetGUID() != target->GetGUID())
+		{
+			handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
+			return true;
+		}
+
+        if (allRanks)
+            spellId = sSpellMgr->GetFirstSpellInChain(spellId);
+
+        if (target->HasSpell(spellId))
+            target->RemoveSpell(spellId, false, !allRanks);
+        else
+            handler->SendSysMessage(LANG_FORGET_SPELL);
+
+        if (GetTalentSpellCost(spellId))
+            target->SendTalentsInfoData(false);
+
+        return true;
     }
 };
 

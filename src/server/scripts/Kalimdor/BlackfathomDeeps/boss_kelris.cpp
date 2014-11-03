@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,21 +15,18 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 #include "blackfathom_deeps.h"
 
 enum Spells
 {
-    SPELL_MIND_BLAST                                       = 15587,
-    SPELL_SLEEP                                            = 8399,
-};
+    SPELL_MIND_BLAST        = 15587,
+    SPELL_SLEEP             = 8399,
 
-//Id's from ACID
-enum Yells
-{
-    SAY_AGGRO                                              = -1048002,
-    SAY_SLEEP                                              = -1048001,
-    SAY_DEATH                                              = -1048000
+    SAY_AGGRO               = 0,
+    SAY_SLEEP               = 1,
+    SAY_DEATH               = 2
 };
 
 class boss_kelris : public CreatureScript
@@ -37,9 +34,9 @@ class boss_kelris : public CreatureScript
 public:
     boss_kelris() : CreatureScript("boss_kelris") { }
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
-        return new boss_kelrisAI (creature);
+        return GetInstanceAI<boss_kelrisAI>(creature);
     }
 
     struct boss_kelrisAI : public ScriptedAI
@@ -54,29 +51,26 @@ public:
 
         InstanceScript* instance;
 
-        void Reset()
+        void Reset() override
         {
             mindBlastTimer = urand(2000, 5000);
             sleepTimer = urand(9000, 12000);
-            if (instance)
-                instance->SetData(TYPE_KELRIS, NOT_STARTED);
+            instance->SetData(TYPE_KELRIS, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/)
+        void EnterCombat(Unit* /*who*/) override
         {
-            DoScriptText(SAY_AGGRO, me);
-            if (instance)
-                instance->SetData(TYPE_KELRIS, IN_PROGRESS);
+            Talk(SAY_AGGRO);
+            instance->SetData(TYPE_KELRIS, IN_PROGRESS);
         }
 
-        void JustDied(Unit* /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
-            DoScriptText(SAY_DEATH, me);
-            if (instance)
-                instance->SetData(TYPE_KELRIS, DONE);
+            Talk(SAY_DEATH);
+            instance->SetData(TYPE_KELRIS, DONE);
         }
 
-        void UpdateAI(const uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -91,7 +85,7 @@ public:
             {
                 if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
                 {
-                    DoScriptText(SAY_SLEEP, me);
+                    Talk(SAY_SLEEP);
                     DoCast(target, SPELL_SLEEP);
                 }
                 sleepTimer = urand(15000, 20000);

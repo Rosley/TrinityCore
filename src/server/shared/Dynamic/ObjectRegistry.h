@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,12 +20,10 @@
 #define TRINITY_OBJECTREGISTRY_H
 
 #include "Define.h"
-#include "Dynamic/UnorderedMap.h"
-#include <ace/Singleton.h>
 
 #include <string>
-#include <vector>
 #include <map>
+#include <vector>
 
 /** ObjectRegistry holds all registry item of the same type
  */
@@ -33,7 +31,13 @@ template<class T, class Key = std::string>
 class ObjectRegistry
 {
     public:
-        typedef std::map<Key, T *> RegistryMapType;
+        typedef std::map<Key, T*> RegistryMapType;
+
+        static ObjectRegistry<T, Key>* instance()
+        {
+            static ObjectRegistry<T, Key> instance;
+            return &instance;
+        }
 
         /// Returns a registry item
         const T* GetRegistryItem(Key key) const
@@ -92,7 +96,7 @@ class ObjectRegistry
             return i_registeredObjects;
         }
 
-        ObjectRegistry() {}
+        ObjectRegistry() { }
         ~ObjectRegistry()
         {
             for (typename RegistryMapType::iterator iter=i_registeredObjects.begin(); iter != i_registeredObjects.end(); ++iter)
@@ -101,7 +105,6 @@ class ObjectRegistry
         }
     private:
         RegistryMapType i_registeredObjects;
-
 };
-#endif
 
+#endif

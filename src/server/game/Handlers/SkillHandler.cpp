@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -18,18 +18,19 @@
 
 #include "Common.h"
 #include "DatabaseEnv.h"
-#include "Opcodes.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
+#include "Opcodes.h"
 #include "Player.h"
+#include "Pet.h"
+#include "UpdateMask.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
-#include "ObjectAccessor.h"
-#include "UpdateMask.h"
 
-void WorldSession::HandleLearnTalentOpcode(WorldPacket & recv_data)
+void WorldSession::HandleLearnTalentOpcode(WorldPacket& recvData)
 {
     uint32 talent_id, requested_rank;
-    recv_data >> talent_id >> requested_rank;
+    recvData >> talent_id >> requested_rank;
 
     _player->LearnTalent(talent_id, requested_rank);
     _player->SendTalentsInfoData(false);
@@ -37,14 +38,17 @@ void WorldSession::HandleLearnTalentOpcode(WorldPacket & recv_data)
 
 void WorldSession::HandleLearnPreviewTalents(WorldPacket& recvPacket)
 {
-    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_LEARN_PREVIEW_TALENTS");
+    TC_LOG_DEBUG("network", "CMSG_LEARN_PREVIEW_TALENTS");
 
     uint32 talentsCount;
     recvPacket >> talentsCount;
 
     uint32 talentId, talentRank;
 
-    for (uint32 i = 0; i < talentsCount; ++i)
+    // Client has max 44 talents for tree for 3 trees, rounded up : 150
+    uint32 const MaxTalentsCount = 150;
+
+    for (uint32 i = 0; i < talentsCount && i < MaxTalentsCount; ++i)
     {
         recvPacket >> talentId >> talentRank;
 
@@ -52,26 +56,31 @@ void WorldSession::HandleLearnPreviewTalents(WorldPacket& recvPacket)
     }
 
     _player->SendTalentsInfoData(false);
+
+    recvPacket.rfinish();
 }
 
-void WorldSession::HandleTalentWipeConfirmOpcode(WorldPacket & recv_data)
+void WorldSession::HandleTalentWipeConfirmOpcode(WorldPacket& recvData)
 {
-    sLog->outDebug(LOG_FILTER_NETWORKIO, "MSG_TALENT_WIPE_CONFIRM");
+    TC_LOG_DEBUG("network", "MSG_TALENT_WIPE_CONFIRM");
     uint64 guid;
-    recv_data >> guid;
+    recvData >> guid;
 
     Creature* unit = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_TRAINER);
     if (!unit)
     {
-        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: HandleTalentWipeConfirmOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)));
+        TC_LOG_DEBUG("network", "WORLD: HandleTalentWipeConfirmOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)));
         return;
     }
+
+    if (!unit->isCanTrainingAndResetTalentsOf(_player))
+        return;
 
     // remove fake death
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
         GetPlayer()->RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
 
-    if (!(_player->resetTalents()))
+    if (!(_player->ResetTalents()))
     {
         WorldPacket data(MSG_TALENT_WIPE_CONFIRM, 8+4);    //you have not any talent
         data << uint64(0);
@@ -84,9 +93,14 @@ void WorldSession::HandleTalentWipeConfirmOpcode(WorldPacket & recv_data)
     unit->CastSpell(_player, 14867, true);                  //spell: "Untalent Visual Effect"
 }
 
-void WorldSession::HandleUnlearnSkillOpcode(WorldPacket & recv_data)
+void WorldSession::HandleUnlearnSkillOpcode(WorldPacket& recvData)
 {
-    uint32 skill_id;
-    recv_data >> skill_id;
-    GetPlayer()->SetSkill(skill_id, 0, 0, 0);
+    uint32 skillId;
+    recvData >> skillId;
+
+    SkillRaceClassInfoEntry const* rcEntry = GetSkillRaceClassInfo(skillId, GetPlayer()->getRace(), GetPlayer()->getClass());
+    if (!rcEntry || !(rcEntry->Flags & SKILL_FLAG_UNLEARNABLE))
+        return;
+
+    GetPlayer()->SetSkill(skillId, 0, 0, 0);
 }

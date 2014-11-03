@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,12 +22,18 @@
 
 class ArenaTeamMgr
 {
-    friend class ACE_Singleton<ArenaTeamMgr, ACE_Null_Mutex>;
+private:
     ArenaTeamMgr();
     ~ArenaTeamMgr();
 
 public:
-    typedef UNORDERED_MAP<uint32, ArenaTeam*> ArenaTeamContainer;
+    static ArenaTeamMgr* instance()
+    {
+        static ArenaTeamMgr instance;
+        return &instance;
+    }
+
+    typedef std::unordered_map<uint32, ArenaTeam*> ArenaTeamContainer;
 
     ArenaTeam* GetArenaTeamById(uint32 arenaTeamId) const;
     ArenaTeam* GetArenaTeamByName(std::string const& arenaTeamName) const;
@@ -50,6 +56,6 @@ protected:
     ArenaTeamContainer ArenaTeamStore;
 };
 
-#define sArenaTeamMgr ACE_Singleton<ArenaTeamMgr, ACE_Null_Mutex>::instance()
+#define sArenaTeamMgr ArenaTeamMgr::instance()
 
 #endif
