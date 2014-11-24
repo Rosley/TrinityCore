@@ -906,6 +906,7 @@ Player::Player(WorldSession* session): Unit(true)
 
 	m_annColor = "|cffffff00";
 	m_selectedGobject = 0;
+	m_nudgeDistance = 3;
 	m_lastSpawnTime = 0;
 
     _activeCheats = CHEAT_NONE;

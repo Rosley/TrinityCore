@@ -2190,6 +2190,7 @@ class Player : public Unit, public GridObject<Player>
 
 		std::string m_annColor;
 		uint32 m_selectedGobject;
+		int m_nudgeDistance;
 		uint32 m_lastSpawnTime;
 
 		void ToggleCommand(int command);
@@ -2201,6 +2202,9 @@ class Player : public Unit, public GridObject<Player>
 
 		std::string GetAnnounceColor() { return m_annColor.c_str(); }
 		void SetAnnounceColor(std::string color) { m_annColor = color; }
+
+		int GetNudgeDistance() { return m_nudgeDistance; }
+		void SetNudgeDistance(int distance) { m_nudgeDistance = distance; }
 
 		uint32 GetSelectedGobject() { return m_selectedGobject; }
 		void SetSelectedGobject(uint32 gobId) { m_selectedGobject = gobId; }

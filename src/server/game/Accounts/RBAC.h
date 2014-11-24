@@ -703,6 +703,7 @@ enum RBACPermissions
 	RBAC_PERM_COMMAND_NUDGEY                                 = 797,
 	RBAC_PERM_COMMAND_NUDGEZ                                 = 798,
 	RBAC_PERM_COMMAND_HAIRCUT                                = 799,
+	RBAC_PERM_COMMAND_MODIFY_NUDGE                           = 800,
 
     // custom permissions 1000+
     RBAC_PERM_MAX

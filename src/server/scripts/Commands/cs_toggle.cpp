@@ -42,7 +42,6 @@ public:
 			{ "appear", rbac::RBAC_PERM_COMMAND_TOGGLE_APPEAR, false, &HandleToggleAppearCommand, "", NULL },
 			{ "summon", rbac::RBAC_PERM_COMMAND_TOGGLE_SUMMON, false, &HandleToggleSummonCommand, "", NULL },
 			{ "modify", rbac::RBAC_PERM_COMMAND_TOGGLE_MODIFY, false, &HandleToggleModifyCommand, "", NULL },
-			{ "whispers", rbac::RBAC_PERM_COMMAND_WHISPERS,    false, &HandleWhispersCommand,     "", NULL },
 			{ NULL, 0, false, NULL, "", NULL }
 		};
 
@@ -144,57 +143,6 @@ public:
 			return true;
 		}
 
-		return false;
-	}
-
-	static bool HandleWhispersCommand(ChatHandler* handler, char const* args)
-	{
-		if (!*args)
-		{
-			handler->PSendSysMessage(LANG_COMMAND_WHISPERACCEPTING, handler->GetSession()->GetPlayer()->isAcceptWhispers() ? handler->GetTrinityString(LANG_ON) : handler->GetTrinityString(LANG_OFF));
-			return true;
-		}
-
-		std::string argStr = strtok((char*)args, " ");
-		// whisper on
-		if (argStr == "on")
-		{
-			handler->GetSession()->GetPlayer()->SetAcceptWhispers(true);
-			handler->SendSysMessage(LANG_COMMAND_WHISPERON);
-			return true;
-		}
-
-		// whisper off
-		if (argStr == "off")
-		{
-			// Remove all players from the Gamemaster's whisper whitelist
-			handler->GetSession()->GetPlayer()->ClearWhisperWhiteList();
-			handler->GetSession()->GetPlayer()->SetAcceptWhispers(false);
-			handler->SendSysMessage(LANG_COMMAND_WHISPEROFF);
-			return true;
-		}
-
-		if (argStr == "remove")
-		{
-			std::string name = strtok(NULL, " ");
-			if (normalizePlayerName(name))
-			{
-				if (Player* player = sObjectAccessor->FindPlayerByName(name))
-				{
-					handler->GetSession()->GetPlayer()->RemoveFromWhisperWhiteList(player->GetGUID());
-					handler->PSendSysMessage(LANG_COMMAND_WHISPEROFFPLAYER, name.c_str());
-					return true;
-				}
-				else
-				{
-					handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND, name.c_str());
-					handler->SetSentErrorMessage(true);
-					return false;
-				}
-			}
-		}
-		handler->SendSysMessage(LANG_USE_BOL);
-		handler->SetSentErrorMessage(true);
 		return false;
 	}
 

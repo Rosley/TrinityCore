@@ -73,6 +73,7 @@ public:
             { "spell",        rbac::RBAC_PERM_COMMAND_MODIFY_SPELL,        false, &HandleModifySpellCommand,         "", NULL },
             { "standstate",   rbac::RBAC_PERM_COMMAND_MODIFY_STANDSTATE,   false, &HandleModifyStandStateCommand,    "", NULL },
             { "talentpoints", rbac::RBAC_PERM_COMMAND_MODIFY_TALENTPOINTS, false, &HandleModifyTalentCommand,        "", NULL },
+			{ "nudge",        rbac::RBAC_PERM_COMMAND_MODIFY_NUDGE,        false, &HandleModifyNudgeCommand,         "", NULL },
             { NULL,           0,                                     false, NULL,                              "", NULL }
         };
         static ChatCommand commandTable[] =
@@ -1621,6 +1622,29 @@ public:
 			handler->PSendSysMessage(LANG_YOU_CHANGE_LVL, nameLink.c_str(), newlevel);
 		}
 
+		return true;
+	}
+
+	static bool HandleModifyNudgeCommand(ChatHandler* handler, const char* args)
+	{
+		Player* player = handler->GetSession()->GetPlayer();
+
+		if (!*args)
+		{
+			handler->PSendSysMessage("Your current nudge distance is %u feet.", player->GetNudgeDistance());
+			return true;
+		}
+
+		int newDistance = atoi(args);
+		player->SetNudgeDistance(newDistance);
+
+		if (newDistance <= -50 || newDistance >= 50)
+		{
+			handler->SendSysMessage("Nudge distance is too large. Choose something between 50 and -50.");
+			return true;
+		}
+
+		handler->PSendSysMessage("Nudge distance set to %u feet.", newDistance);
 		return true;
 	}
 

@@ -57,7 +57,7 @@ public:
 
 		Player* player = handler->GetSession()->GetPlayer();
 
-		float x = player->GetPositionX();
+		float x = player->GetPositionX(); + player->GetNudgeDistance();
 		float y = player->GetPositionY();
 		float z = player->GetPositionZ();
 		uint32 mapid = player->GetMapId();
@@ -79,7 +79,7 @@ public:
 
 		Player* player = handler->GetSession()->GetPlayer();
 
-		float x = player->GetPositionX();
+		float x = player->GetPositionX(); + player->GetNudgeDistance();
 		float y = player->GetPositionY();
 		float z = player->GetPositionZ();
 		uint32 mapid = player->GetMapId();
@@ -111,9 +111,9 @@ public:
 		float z;
 
 		if (argstr == "up")
-			z = player->GetPositionZ();
+			z = player->GetPositionZ(); + player->GetNudgeDistance();
 		else if (argstr == "down")
-			z = player->GetPositionZ();
+			z = player->GetPositionZ(); - player->GetNudgeDistance();
 		else
 		{
 			handler->SendSysMessage("Only 'down' or 'up' are valid arguments.");
