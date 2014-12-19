@@ -248,6 +248,18 @@ public:
         if (!charID)
             return false;
 
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
+		{
+			handler->SendSysMessage("Spawning is prohibited in this zone.");
+			return true;
+		}
+
+		if (!handler->GetSession()->GetPlayer()->IsAdmin() && !handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
+		{
+			handler->SendSysMessage("You cannot permanently spawn in the main phase. Use .modify phase $number to spawn your creature, or spawn your creature temporarily.");
+			return true;
+		}
+
         uint32 id  = atoi(charID);
         if (!sObjectMgr->GetCreatureTemplate(id))
             return false;
@@ -533,6 +545,12 @@ public:
             handler->SetSentErrorMessage(true);
             return false;
         }
+
+		if (!handler->GetSession()->GetPlayer()->IsAdmin() && !handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
+		{
+			handler->SendSysMessage("You cannot delete creatures in the main phase. Use .modify phase $number to delete your creature.");
+			return true;
+		}
 
 		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
 		{
