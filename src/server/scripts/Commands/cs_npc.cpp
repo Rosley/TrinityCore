@@ -254,7 +254,7 @@ public:
 			return true;
 		}
 
-		if (!handler->GetSession()->GetPlayer()->IsAdmin() && !handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
+		if (!handler->GetSession()->GetSecurity() == SEC_MODERATOR && !handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
 		{
 			handler->SendSysMessage("You cannot permanently spawn in the main phase. Use .modify phase $number to spawn your creature, or spawn your creature temporarily.");
 			return true;
@@ -546,7 +546,7 @@ public:
             return false;
         }
 
-		if (!handler->GetSession()->GetPlayer()->IsAdmin() && !handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
+		if (!handler->GetSession()->GetSecurity() == SEC_MODERATOR && !handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
 		{
 			handler->SendSysMessage("You cannot delete creatures in the main phase. Use .modify phase $number to delete your creature.");
 			return true;
