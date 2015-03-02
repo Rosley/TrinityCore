@@ -582,6 +582,12 @@ public:
 			}
 		}
 
+		if (!handler->GetSession()->GetPlayer()->IsAdmin() && target->GetTypeId() == TYPEID_PLAYER)
+		{
+			handler->PSendSysMessage("You can only use .kill on NPCs unless you are a staff member.", target->GetName().c_str());
+			return false;
+		}
+
         if (target->IsAlive())
         {
             if (sWorld->getBoolConfig(CONFIG_DIE_COMMAND_MODE))
