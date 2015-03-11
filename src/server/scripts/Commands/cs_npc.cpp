@@ -248,6 +248,12 @@ public:
         if (!charID)
             return false;
 
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id) && !handler->GetSession()->GetPlayer()->IsAdmin())
+		{
+			handler->PSendSysMessage("This NPC (id '%u') is disabled.", id);
+			return true;
+		}
+
 		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))
 		{
 			handler->SendSysMessage("Spawning is prohibited in this zone.");
@@ -257,7 +263,13 @@ public:
 		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
 		{
 			handler->SendSysMessage("You cannot permanently spawn in the main phase. Use .modify phase $number to spawn your creature, or spawn your creature temporarily.");
-			return false;
+			return true;
+		}
+
+		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == -1)
+		{
+			handler->SendSysMessage("You cannot permanently spawn in the main phase. Use .modify phase $number to spawn your creature, or spawn your creature temporarily.");
+			return true;
 		}
 
         uint32 id  = atoi(charID);
@@ -549,7 +561,13 @@ public:
 		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
 		{
 			handler->SendSysMessage("You cannot delete creatures in the main phase. Use .modify phase $number to delete your creature.");
-			return false;
+			return true;
+		}
+
+		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == -1)
+		{
+			handler->SendSysMessage("You cannot delete creatures in the main phase. Use .modify phase $number to delete your creature.");
+			return true;
 		}
 
 		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_ZONE, handler->GetSession()->GetPlayer()->GetZoneId()))

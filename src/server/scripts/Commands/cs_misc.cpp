@@ -580,12 +580,18 @@ public:
 				handler->PSendSysMessage("%s has modify disabled. You can't use commands on them.", target->GetName().c_str());
 				return true;
 			}
+
+			if (!handler->GetSession()->GetPlayer()->IsAdmin())
+			{
+				handler->PSendSysMessage("You can only use .kill on NPCs unless you are a staff member.", target->GetName().c_str());
+				return true;
+			}
 		}
 
-		if (!handler->GetSession()->GetPlayer()->IsAdmin() && target->GetTypeId() == TYPEID_PLAYER)
+		if (!handler->GetSession()->GetPlayer()->CanUseID(DISABLE_TYPE_NPC, id) && !handler->GetSession()->GetPlayer()->IsAdmin())
 		{
-			handler->PSendSysMessage("You can only use .kill on NPCs unless you are a staff member.", target->GetName().c_str());
-			return false;
+			handler->PSendSysMessage("You cannot kill this NPC (id '%u').", id);
+			return true;
 		}
 
         if (target->IsAlive())

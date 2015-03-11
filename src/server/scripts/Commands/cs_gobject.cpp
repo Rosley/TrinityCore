@@ -127,7 +127,13 @@ public:
 		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
 		{
 			handler->SendSysMessage("You cannot permanently spawn in the main phase. Use .modify phase $number to spawn your GameObject, or spawn your GameObject temporarily.");
-			return false;
+			return true;
+		}
+
+		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == -1)
+		{
+			handler->SendSysMessage("You cannot permanently spawn in the main phase. Use .modify phase $number to spawn your GameObject, or spawn your GameObject temporarily.");
+			return true;
 		}
 
         char* spawntimeSecs = strtok(NULL, " ");
@@ -390,7 +396,13 @@ public:
 		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == 1)
 		{
 			handler->SendSysMessage("You cannot permanently delete GameObjects in the main phase. Use .modify phase $number to delete your GameObject.");
-			return false;
+			return true;
+		}
+
+		if (handler->GetSession()->GetSecurity() == SEC_MODERATOR && handler->GetSession()->GetPlayer()->GetPhaseMask() == -1)
+		{
+			handler->SendSysMessage("You cannot permanently delete GameObjects in the main phase. Use .modify phase $number to delete your GameObject.");
+			return true;
 		}
 
         GameObject* object = NULL;
